@@ -212,11 +212,6 @@
         let weekdayGroupCounter = 0; 
 
         // =================================================================================
-        // --- VIRTUAL FILE: dom_elements.js ---
-        // =================================================================================
-        // DOM elements are generally retrieved within functions that need them or in initApp.
-
-        // =================================================================================
         // --- VIRTUAL FILE: utils.js ---
         // =================================================================================
 
@@ -243,8 +238,7 @@
             const statusMessageDiv = document.getElementById('statusMessage');
             statusMessageDiv.innerHTML = message.replace(/\n/g, '<br>'); 
             statusMessageDiv.className = `mb-2 text-sm font-medium text-center p-2 rounded-md ${isError ? 'text-red-700 bg-red-100 border border-red-300' : 'text-green-700 bg-green-100 border border-green-300'}`;
-            if (isError) statusMessageDiv.classList.add('text-left'); 
-            else statusMessageDiv.classList.remove('text-left');
+            statusMessageDiv.classList.toggle('text-left', isError); // Add text-left for errors, remove for success
             if (!isError) { 
                 setTimeout(() => {
                     if (statusMessageDiv.innerHTML === message.replace(/\n/g, '<br>') && !statusMessageDiv.classList.contains('text-red-700')) {
@@ -477,9 +471,6 @@
                         if (!isNaN(hours) && !isNaN(minutes)) {
                             if (minutes !== 0 && minutes !== 30) {
                                 minutes = (minutes < 15 || minutes >= 45) ? 0 : 30; 
-                                // If minutes were >= 45 and rounded to 0, it implies next hour's 00,
-                                // but time input handles hour overflow itself if minutes go to 60.
-                                // We just ensure minutes are 0 or 30.
                                 e.target.value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
                             }
                         }
@@ -676,7 +667,7 @@
                 return `${contextMessage}: No rate time ranges defined. Full day coverage is required.`;
             }
 
-            const minuteCoverage = new Array(1440).fill(0); // 1440 minutes in a day
+            const minuteCoverage = new Array(1440).fill(0); // 1440 minutes in a day (24 * 60)
 
             for (const r of rateTimeranges) {
                 if (!r.start || !r.end) {
@@ -688,40 +679,46 @@
                 if (startMinutes % 30 !== 0) {
                     return `${contextMessage}: Start time ${r.start} must be on a :00 or :30 mark.`;
                 }
-                if (r.end !== "00:00" && (endMinutes % 30 !== 0)) { // "00:00" end time is special
+                if (r.end !== "00:00" && (endMinutes % 30 !== 0)) {
                     return `${contextMessage}: End time ${r.end} must be on a :00 or :30 mark (or be "00:00" for end of day).`;
                 }
-
+                
                 let effectiveEndMinutes = (r.end === "00:00") ? 1440 : endMinutes;
 
-                if (startMinutes === effectiveEndMinutes && !(startMinutes === 0 && effectiveEndMinutes === 1440)) { // Allow 00:00-00:00 for full day
-                     return `${contextMessage}: Period ${r.start}-${r.end} has zero duration.`;
+                // Handle the case of a single 00:00 to 00:00 range (full day coverage)
+                if (startMinutes === 0 && effectiveEndMinutes === 1440) {
+                    for (let m = 0; m < 1440; m++) {
+                        minuteCoverage[m]++;
+                        if (minuteCoverage[m] > 1) {
+                            return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} due to full-day period ${r.start}-${r.end} conflicting with another.`;
+                        }
+                    }
+                    continue; // Move to next range if this one is a valid full day
                 }
 
-                if (startMinutes < effectiveEndMinutes) { // Standard range (not spanning midnight based on raw values)
+                // Check for invalid duration (start >= end, unless it's a valid midnight span or the special 00:00-00:00)
+                if (startMinutes >= effectiveEndMinutes && !(startMinutes > endMinutes && effectiveEndMinutes !== 1440) ) { // start > end is only ok if it spans midnight
+                     return `${contextMessage}: Period ${r.start}-${r.end} has zero, negative, or invalid duration. End time must be after start time.`;
+                }
+
+
+                if (startMinutes < effectiveEndMinutes) { // Standard range (not spanning midnight)
                     for (let m = startMinutes; m < effectiveEndMinutes; m++) {
                         minuteCoverage[m]++;
                         if (minuteCoverage[m] > 1) {
                             return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} due to period ${r.start}-${r.end}.`;
                         }
                     }
-                } else { // Range spans midnight (e.g., 22:00 to 06:00) or is invalid if start > end and end is not 00:00
-                    if (r.end === "00:00" && startMinutes < 1440) { // e.g. 22:00 to 00:00 (midnight)
-                         for (let m = startMinutes; m < 1440; m++) {
-                            minuteCoverage[m]++;
-                            if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} due to period ${r.start}-${r.end}.`;
-                        }
-                    } else if (startMinutes > endMinutes) { // True midnight span e.g. 22:00 to 06:00
-                        for (let m = startMinutes; m < 1440; m++) { // From start to midnight
-                            minuteCoverage[m]++;
-                            if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} (first part of span ${r.start}-${r.end}).`;
-                        }
-                        for (let m = 0; m < endMinutes; m++) { // From midnight to end
-                            minuteCoverage[m]++;
-                            if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} (second part of span ${r.start}-${r.end}).`;
-                        }
-                    } else { // Should be caught by startMinutes >= effectiveEndMinutes earlier
-                        return `${contextMessage}: Invalid time range ${r.start}-${r.end}.`;
+                } else { // Range spans midnight (e.g., 22:00 to 06:00)
+                    // Part 1: From start time to midnight (1440 minutes)
+                    for (let m = startMinutes; m < 1440; m++) {
+                        minuteCoverage[m]++;
+                        if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} (first part of span ${r.start}-${r.end}).`;
+                    }
+                    // Part 2: From midnight (0 minutes) to end time
+                    for (let m = 0; m < effectiveEndMinutes; m++) { // effectiveEndMinutes here would be the endMinutes for the next day
+                        minuteCoverage[m]++;
+                        if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} (second part of span ${r.start}-${r.end}).`;
                     }
                 }
             }
