@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Tariff Pattern Designer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        // Import the date-holidays library using its ESM endpoint
+        // and assign the default export (the Holidays class) to the global window object.
+        // This makes it accessible to the non-module main script below.
+        import Holidays from 'https://cdn.jsdelivr.net/npm/date-holidays@3.24.3/+esm';
+        window.Holidays = Holidays;
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar styling */
+        #jsonOutput::-webkit-scrollbar, 
+        .tariff-rules-container::-webkit-scrollbar, 
+        .weekday-groups-container::-webkit-scrollbar,
+        .holiday-month-rules-container::-webkit-scrollbar,
+        .override-rules-container::-webkit-scrollbar,
+        #fetchedHolidaysList::-webkit-scrollbar {
+            width: 8px; height: 8px;
+        }
+        #jsonOutput::-webkit-scrollbar-track, 
+        .tariff-rules-container::-webkit-scrollbar-track, 
+        .weekday-groups-container::-webkit-scrollbar-track,
+        .holiday-month-rules-container::-webkit-scrollbar-track,
+        .override-rules-container::-webkit-scrollbar-track,
+        #fetchedHolidaysList::-webkit-scrollbar-track {
+            background: #f1f1f1; border-radius: 10px;
+        }
+        #jsonOutput::-webkit-scrollbar-thumb, 
+        .tariff-rules-container::-webkit-scrollbar-thumb, 
+        .weekday-groups-container::-webkit-scrollbar-thumb,
+        .holiday-month-rules-container::-webkit-scrollbar-thumb,
+        .override-rules-container::-webkit-scrollbar-thumb,
+        #fetchedHolidaysList::-webkit-scrollbar-thumb {
+            background: #888; border-radius: 10px;
+        }
+        #jsonOutput::-webkit-scrollbar-thumb:hover, 
+        .tariff-rules-container::-webkit-scrollbar-thumb:hover, 
+        .weekday-groups-container::-webkit-scrollbar-thumb:hover,
+        .holiday-month-rules-container::-webkit-scrollbar-thumb:hover,
+        .override-rules-container::-webkit-scrollbar-thumb:hover,
+        #fetchedHolidaysList::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .label-cb { display: flex; align-items: center; cursor: pointer; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .section-container {
+            border: 1px solid #d1d5db; border-radius: 0.75rem; padding: 1.5rem; 
+            margin-bottom: 2rem; background-color: #ffffff; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        .section-header {
+            font-size: 1.5rem; font-weight: 700; color: #1d4ed8; 
+            margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #93c5fd;
+        }
+        
+        .tariff-rule, .weekday-group, .holiday-month-rule, .override-rule {
+            border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; 
+            margin-bottom: 1.5rem; background-color: #f9fafb;
+        }
+        .subsection-title {
+            font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; 
+            color: #374151; border-bottom: 1px solid #d1d5db; padding-bottom: 0.5rem;
+        }
+        .remove-btn {
+             background-color: #ef4444; color: white; font-weight: 600; 
+             padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem;
+        }
+        .remove-btn:hover { background-color: #dc2626; }
+        .add-btn {
+            background-color: #22c55e; color: white; font-weight: 600;
+            padding: 0.5rem 1rem; border-radius: 0.5rem;
+        }
+        .add-btn:hover { background-color: #16a34a; }
+        
+        #statusMessage { min-height: 2.5rem; display: flex; align-items: center; justify-content: center; }
+        .input-field {
+            margin-top: 0.25rem; display: block; width: 100%; border-radius: 0.375rem; 
+            border-color: #d1d5db; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); 
+            padding: 0.5rem 0.75rem; font-size: 0.875rem;
+        }
+        .input-label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem;}
+
+        .quick-start-btn {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+            font-weight: 500; /* medium */
+            padding: 0.625rem 1.25rem; /* py-2.5 px-5 */
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: background-color 0.15s ease-in-out;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+        }
+        .quick-start-btn:hover {
+            background-color: #4338ca; /* indigo-700 */
+        }
+        #fetchedHolidaysList {
+            max-height: 200px; /* Limit height and make scrollable */
+            overflow-y: auto;
+            background-color: #eef2ff; /* indigo-50 for slight contrast */
+            padding: 0.75rem; /* p-3 */
+            border-radius: 0.375rem; /* rounded-md */
+            border: 1px solid #c7d2fe; /* indigo-200 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-2xl">
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Comprehensive Tariff Designer</h1>
+            <p class="text-gray-600 mt-3 text-lg">Define standard rates, country-specific holidays, and date overrides with full validation.</p>
+        </header>
+
+        <section class="section-container mb-10 bg-indigo-50 border-indigo-200">
+            <h2 class="section-header text-indigo-700 border-indigo-400">Quick Start Examples</h2>
+            <p class="text-sm text-gray-600 mb-6">Select an example to pre-fill the designer. This will clear any current configuration.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button id="loadFlatRateBtn" class="quick-start-btn">Flat Rate</button>
+                <button id="loadDualRateBtn" class="quick-start-btn">Dual Rate</button>
+                <button id="loadDualRateWeekendsOffpeakBtn" class="quick-start-btn">Dual Rate (Weekend Off-peak)</button>
+                <button id="loadFullyComplicatedBtn" class="quick-start-btn">Fully Complicated Example</button>
+            </div>
+        </section>
+
+        <section class="section-container">
+            <h2 class="section-header">Standard Tariff Rules</h2>
+            <div id="tariffRulesContainer" class="space-y-6 mb-6"></div>
+            <button id="addTariffRuleBtn" class="add-btn w-full sm:w-auto">+ Add Standard Tariff Rule</button>
+        </section>
+
+        <section class="section-container">
+            <h2 class="section-header">Country Holidays</h2>
+            <div id="countryHolidaysConfig" class="mb-6 p-4 border border-dashed border-blue-300 rounded-lg bg-blue-50">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="holidayCountry" class="input-label">Country Code (e.g., AU):</label>
+                        <input type="text" id="holidayCountry" class="input-field" placeholder="AU">
+                    </div>
+                    <div>
+                        <label for="holidayState" class="input-label">State/Region Code (Optional, e.g., ACT):</label>
+                        <input type="text" id="holidayState" class="input-field" placeholder="ACT">
+                    </div>
+                </div>
+                 <div id="fetchedHolidaysListContainer" class="mt-4">
+                    <p class="text-sm text-gray-600 mb-1">Enter country/state to see a list of recognized public holidays for the current year below.</p>
+                    <div id="fetchedHolidaysList" class="text-xs">
+                        <p class="text-gray-500">Awaiting country/state input...</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600 mb-1 mt-4">Define specific rate structures for holidays within the selected country/state.</p>
+                <p class="text-xs text-gray-500 mb-4">If this section is used, Country code is required. Holiday rules below should cover all months for holiday periods.</p>
+            </div>
+            <div id="holidayMonthRulesContainer" class="space-y-6 mb-6"></div>
+            <button id="addHolidayMonthRuleBtn" class="add-btn w-full sm:w-auto bg-blue-500 hover:bg-blue-600">+ Add Holiday Month Rule</button>
+        </section>
+
+        <section class="section-container">
+            <h2 class="section-header">Override Specific Days</h2>
+            <p class="text-sm text-gray-600 mb-4">Define special rates for specific calendar dates (e.g., Christmas, New Year's Eve).</p>
+            <div id="overrideRulesContainer" class="space-y-6 mb-6"></div>
+            <button id="addOverrideRuleBtn" class="add-btn w-full sm:w-auto bg-purple-500 hover:bg-purple-600">+ Add Override Day Rule</button>
+        </section>
+
+        <section class="mt-10 p-6 bg-gray-50 rounded-lg shadow-inner">
+            <h2 class="subsection-title text-xl mb-4 text-gray-700 border-b pb-2">Generate & View JSON</h2>
+            <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                <button id="generateJsonBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg">Validate & Generate JSON</button>
+                <button id="copyJsonBtn" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg" disabled>Copy JSON to Clipboard</button>
+            </div>
+            <div id="statusMessage" class="mb-2 text-sm font-medium text-center p-2 rounded-md"></div>
+            <textarea id="jsonOutput" rows="20" class="w-full p-4 border border-gray-300 rounded-md bg-gray-100 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500" readonly placeholder="JSON output will appear here after successful validation..."></textarea>
+        </section>
+
+        <footer class="text-center text-sm text-gray-500 mt-12">
+            <p>&copy; <span id="currentYear"></span> Tariff Designer Interface. Internal Use Only.</p>
+        </footer>
+    </div>
+
+    <script>
+        // =================================================================================
+        // --- VIRTUAL FILE: constants.js ---
+        // =================================================================================
+        const MONTHS_DATA = [ 
+            { name: "January", value: 1 }, { name: "February", value: 2 }, { name: "March", value: 3 }, 
+            { name: "April", value: 4 }, { name: "May", value: 5 }, { name: "June", value: 6 }, 
+            { name: "July", value: 7 }, { name: "August", value: 8 }, { name: "September", value: 9 }, 
+            { name: "October", value: 10 }, { name: "November", value: 11 }, { name: "December", value: 12 }
+        ];
+        const WEEKDAYS_DATA = [ 
+            { name: "Monday", value: 1 }, { name: "Tuesday", value: 2 }, { name: "Wednesday", value: 3 }, 
+            { name: "Thursday", value: 4 }, { name: "Friday", value: 5 }, { name: "Saturday", value: 6 }, 
+            { name: "Sunday", value: 7 }
+        ];
+        const ALL_MONTH_NUMBERS = MONTHS_DATA.map(m => m.value);
+        const ALL_WEEKDAY_NUMBERS = WEEKDAYS_DATA.map(wd => wd.value);
+
+        // =================================================================================
+        // --- VIRTUAL FILE: state.js (Global State) ---
+        // =================================================================================
+        let tariffRuleCounter = 0;
+        let holidayMonthRuleCounter = 0;
+        let overrideRuleCounter = 0;
+        let weekdayGroupCounter = 0; 
+
+        // =================================================================================
+        // --- VIRTUAL FILE: dom_elements.js ---
+        // =================================================================================
+        // This section would typically be where DOM elements are cached if not passed around.
+        // For this single-file structure, elements are mostly accessed directly via getElementById
+        // or passed as arguments to functions. We'll define them where they are first needed
+        // or in the main init function for broader scope.
+
+        // =================================================================================
+        // --- VIRTUAL FILE: utils.js ---
+        // =================================================================================
+
+        /**
+         * Debounce function to limit the rate at which a function can fire.
+         * @param {Function} func - The function to debounce.
+         * @param {number} delay - The delay in milliseconds.
+         * @returns {Function} - The debounced function.
+         */
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        /**
+         * Displays a status message to the user.
+         * @param {string} message - The message to display.
+         * @param {boolean} [isError=false] - True if the message is an error, false otherwise.
+         */
+        function showStatusMessage(message, isError = false) { 
+            const statusMessageDiv = document.getElementById('statusMessage'); // Get element here
+            statusMessageDiv.innerHTML = message.replace(/\n/g, '<br>'); 
+            statusMessageDiv.className = `mb-2 text-sm font-medium text-center p-2 rounded-md ${isError ? 'text-red-700 bg-red-100 border border-red-300' : 'text-green-700 bg-green-100 border border-green-300'}`;
+            if (isError) statusMessageDiv.classList.add('text-left'); 
+            else statusMessageDiv.classList.remove('text-left');
+            if (!isError) { 
+                setTimeout(() => {
+                    if (statusMessageDiv.innerHTML === message.replace(/\n/g, '<br>') && !statusMessageDiv.classList.contains('text-red-700')) {
+                         statusMessageDiv.textContent = '';
+                         statusMessageDiv.className = 'mb-2 text-sm font-medium text-center p-2 rounded-md'; 
+                    }
+                }, 7000);
+            }
+        }
+        
+        /**
+         * Copies the generated JSON from the textarea to the clipboard.
+         */
+        function copyJsonToClipboard() {
+            const jsonOutputTextarea = document.getElementById('jsonOutput'); // Get element here
+            if (!jsonOutputTextarea.value) {
+                showStatusMessage("Nothing to copy. Generate JSON first.", true);
+                return;
+            }
+
+            if (!navigator.clipboard) {
+                showStatusMessage("Clipboard API (navigator.clipboard) is not available in this browser. Please copy manually.", true);
+                console.warn("navigator.clipboard is not available.");
+                return;
+            }
+            
+            navigator.clipboard.writeText(jsonOutputTextarea.value)
+                .then(() => {
+                    showStatusMessage("JSON copied to clipboard!", false);
+                })
+                .catch(err => {
+                    console.error('Clipboard API Error Object:', err);
+                    console.error('Error Name:', err ? err.name : 'N/A');
+                    console.error('Error Message:', err ? err.message : 'N/A');
+
+                    let userErrorMessage = "Failed to copy JSON. Please check the browser console for more details.";
+
+                    if (err && err.name === "NotAllowedError") {
+                        userErrorMessage = `<b>Clipboard Error:</b> ${err.message} <br/>This usually means the action was blocked by a <b>permissions policy</b>.`;
+                        if (!window.isSecureContext) {
+                            userErrorMessage += "<br/>Ensure the page is served over a secure context (<b>HTTPS</b> or <b>localhost</b>).";
+                        } else {
+                            userErrorMessage += "<br/>Check browser settings for clipboard permissions for this site, or try focusing the document before copying.";
+                        }
+                         userErrorMessage += "<br/>You may need to <a href='https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText#browser_compatibility' target='_blank' class='text-blue-600 hover:underline'>check browser compatibility and requirements</a> or copy the text manually.";
+                    } else if (err && err.message) { 
+                        userErrorMessage = `Failed to copy: ${err.name || 'Error'} - ${err.message}`;
+                    } else { 
+                        userErrorMessage = "Failed to copy JSON due to an unknown error. The browser console may have more information.";
+                    }
+                    
+                    showStatusMessage(userErrorMessage, true);
+                });
+        }
+
+        // =================================================================================
+        // --- VIRTUAL FILE: ui_builders.js ---
+        // =================================================================================
+
+        /**
+         * Creates a group of checkboxes with a "Select All" option.
+         * @param {Array<Object>} items - Array of items to create checkboxes for. Each item has {name, value}.
+         * @param {string} groupNamePrefix - A prefix for generating unique IDs/names.
+         * @param {string} allText - Text for the "Select All" checkbox label.
+         * @param {Function} itemChangeHandler - Handler for individual checkbox changes.
+         * @param {Function} allChangeHandler - Handler for "Select All" checkbox changes.
+         * @param {boolean} [initiallySelectAll=false] - Whether all items should be selected initially.
+         * @param {Array<number|string>} [initialSelection=null] - Array of values to be selected initially.
+         * @returns {HTMLElement} - The container div for the checkbox group.
+         */
+        function createCheckboxGroup(items, groupNamePrefix, allText, itemChangeHandler, allChangeHandler, initiallySelectAll = false, initialSelection = null) {
+            const uniqueId = `${groupNamePrefix}-${Date.now()}-${Math.random().toString(36).substring(2,7)}`;
+            const container = document.createElement('div'); 
+            const allLabel = document.createElement('label');
+            allLabel.className = 'label-cb text-gray-700 font-medium mb-2 block'; 
+            const allCheckbox = document.createElement('input');
+            allCheckbox.type = 'checkbox';
+            allCheckbox.className = 'mr-2 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500';
+            allCheckbox.checked = initiallySelectAll && !initialSelection; 
+            allCheckbox.addEventListener('change', (e) => allChangeHandler(e.target, itemContainer));
+            allLabel.appendChild(allCheckbox);
+            allLabel.appendChild(document.createTextNode(allText));
+            container.appendChild(allLabel);
+            const itemContainer = document.createElement('div'); 
+            itemContainer.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3';
+            items.forEach(item => {
+                const label = document.createElement('label');
+                label.className = 'label-cb text-sm text-gray-600 hover:text-blue-600';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = `${uniqueId}-item`; 
+                checkbox.value = item.value;
+                checkbox.checked = initialSelection ? initialSelection.includes(item.value) : initiallySelectAll;
+                checkbox.className = 'mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500';
+                checkbox.addEventListener('change', () => itemChangeHandler(allCheckbox, itemContainer));
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(item.name));
+                itemContainer.appendChild(label);
+            });
+            container.appendChild(itemContainer);
+            setTimeout(() => itemChangeHandler(allCheckbox, itemContainer), 0); // Ensure correct initial state of "Select All"
+            return container; 
+        }
+
+        /**
+         * Handles changes to the "Select All" checkbox.
+         * @param {HTMLInputElement} allCheckbox - The "Select All" checkbox element.
+         * @param {HTMLElement} itemContainer - The container of individual item checkboxes.
+         */
+        function handleSelectAllChange(allCheckbox, itemContainer) { 
+            const itemCbs = itemContainer.querySelectorAll('input[type="checkbox"]');
+            itemCbs.forEach(cb => cb.checked = allCheckbox.checked);
+            allCheckbox.indeterminate = false; 
+        }
+
+        /**
+         * Handles changes to individual item checkboxes, updating the "Select All" state.
+         * @param {HTMLInputElement} allCheckbox - The "Select All" checkbox element.
+         * @param {HTMLElement} itemContainer - The container of individual item checkboxes.
+         */
+        function handleItemCheckboxChange(allCheckbox, itemContainer) { 
+            const itemCbs = Array.from(itemContainer.querySelectorAll('input[type="checkbox"]'));
+            const allChecked = itemCbs.every(cb => cb.checked);
+            const someChecked = itemCbs.some(cb => cb.checked);
+            allCheckbox.checked = allChecked;
+            allCheckbox.indeterminate = !allChecked && someChecked; 
+        }
+
+        /**
+         * Adds a new Tariff Rule or Holiday Month Rule to the UI.
+         * @param {'standard'|'holiday'} type - The type of rule to add.
+         * @param {Array<number>} [initialMonths=null] - Array of month values to pre-select.
+         * @param {Array<Object>} [initialWeekdayGroups=null] - Array of weekday group configurations.
+         */
+        function addTariffRuleOrHolidayMonthRule(type, initialMonths = null, initialWeekdayGroups = null) { 
+            const tariffRulesContainer = document.getElementById('tariffRulesContainer'); // Get element here
+            const holidayMonthRulesContainer = document.getElementById('holidayMonthRulesContainer'); // Get element here
+
+            let ruleCounter, ruleContainer, ruleClass, titlePrefix;
+            if (type === 'standard') {
+                tariffRuleCounter++; ruleCounter = tariffRuleCounter; ruleContainer = tariffRulesContainer;
+                ruleClass = 'tariff-rule'; titlePrefix = 'Standard Tariff Rule';
+            } else { 
+                holidayMonthRuleCounter++; ruleCounter = holidayMonthRuleCounter; ruleContainer = holidayMonthRulesContainer;
+                ruleClass = 'holiday-month-rule bg-blue-50'; titlePrefix = 'Holiday Month Rule';
+            }
+            const ruleId = `${type}Rule-${ruleCounter}`;
+            const ruleDiv = document.createElement('div');
+            ruleDiv.id = ruleId; ruleDiv.className = ruleClass;
+            ruleDiv.dataset.ruleNumber = ruleCounter; ruleDiv.dataset.ruleType = type;
+            ruleDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-blue-700">${titlePrefix} #${ruleCounter}</h3>
+                    <button class="remove-btn" data-remove-rule="${ruleId}">Remove Rule</button>
+                </div>
+                <section class="mb-4">
+                    <h4 class="subsection-title text-md">Months for this Rule</h4>
+                    <div class="month-checkboxes-target"></div> 
+                </section>
+                <div class="weekday-groups-container space-y-4 mb-4" data-weekday-groups-for="${ruleId}"></div>
+                <button class="add-btn text-sm add-weekday-group-btn" data-add-to-rule="${ruleId}">+ Add Weekday Group</button>
+            `;
+            const monthCheckboxesTarget = ruleDiv.querySelector('.month-checkboxes-target');
+            const monthCheckboxes = createCheckboxGroup(MONTHS_DATA, `months-${ruleId}`, 'Select All Months', handleItemCheckboxChange, handleSelectAllChange, !initialMonths, initialMonths);
+            monthCheckboxesTarget.appendChild(monthCheckboxes);
+            ruleContainer.appendChild(ruleDiv);
+            const weekdayGroupsContainerForThisRule = ruleDiv.querySelector('.weekday-groups-container');
+            if (initialWeekdayGroups && initialWeekdayGroups.length > 0) {
+                initialWeekdayGroups.forEach(wg => { addWeekdayGroup(weekdayGroupsContainerForThisRule, ruleId, ruleCounter, wg.weekdays, wg.ratePeriods); });
+            } else {
+                 addWeekdayGroup(weekdayGroupsContainerForThisRule, ruleId, ruleCounter, null, [{start: "00:00", end: "00:00", amount: 0.00}]);
+            }
+            ruleDiv.querySelector(`[data-remove-rule="${ruleId}"]`).addEventListener('click', () => ruleDiv.remove());
+            ruleDiv.querySelector(`.add-weekday-group-btn`).addEventListener('click', (e) => {
+                const targetRuleId = e.target.dataset.addToRule;
+                const parentRuleDiv = document.getElementById(targetRuleId);
+                const parentRuleNumber = parentRuleDiv.dataset.ruleNumber;
+                const targetContainer = parentRuleDiv.querySelector(`.weekday-groups-container`);
+                addWeekdayGroup(targetContainer, targetRuleId, parentRuleNumber); 
+            });
+        }
+
+        /**
+         * Adds a new Weekday Group to a Tariff Rule or Holiday Month Rule.
+         * @param {HTMLElement} container - The container to add the weekday group to.
+         * @param {string} parentRuleId - The ID of the parent rule.
+         * @param {number} parentRuleNum - The number of the parent rule (for display).
+         * @param {Array<number>} [initialWeekdays=null] - Array of weekday values to pre-select.
+         * @param {Array<Object>} [initialRatePeriods=null] - Array of rate period configurations.
+         */
+        function addWeekdayGroup(container, parentRuleId, parentRuleNum, initialWeekdays = null, initialRatePeriods = null) { 
+            weekdayGroupCounter++; 
+            const groupId = `weekdayGroup-${weekdayGroupCounter}`; 
+            const groupDiv = document.createElement('div');
+            groupDiv.id = groupId; groupDiv.className = 'weekday-group ml-0 md:ml-6'; 
+            groupDiv.dataset.groupNumber = weekdayGroupCounter; 
+            const ruleTypePrefix = parentRuleId.startsWith('standard') ? "Standard Rule" : "Holiday Rule";
+            groupDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-md font-medium text-green-700">Weekday Group (within ${ruleTypePrefix} #${parentRuleNum})</h4>
+                    <button class="remove-btn text-xs" data-remove-group="${groupId}">Remove Weekday Group</button>
+                </div>
+                <section class="mb-4">
+                    <h5 class="subsection-title text-sm">Weekdays for this Group (ISO)</h5>
+                    <div class="weekday-checkboxes-target"></div> 
+                </section>
+                <div class="rate-periods-container space-y-3" data-rate-periods-for="${groupId}">
+                    <h5 class="subsection-title text-sm">Rate Time Ranges</h5>
+                </div>
+                <button class="add-btn text-xs add-rate-period-btn mt-3" data-add-to-group="${groupId}">+ Add Rate Period</button>
+            `;
+            const weekdayCheckboxesTarget = groupDiv.querySelector('.weekday-checkboxes-target');
+            const weekdayCheckboxes = createCheckboxGroup(WEEKDAYS_DATA, `weekdays-${groupId}`, 'Select All Weekdays', handleItemCheckboxChange, handleSelectAllChange, !initialWeekdays, initialWeekdays);
+            weekdayCheckboxesTarget.appendChild(weekdayCheckboxes);
+            container.appendChild(groupDiv);
+            const ratePeriodsContainerForThisGroup = groupDiv.querySelector(`.rate-periods-container`);
+            if (initialRatePeriods && initialRatePeriods.length > 0) {
+                initialRatePeriods.forEach(rp => addRatePeriodToContainer(ratePeriodsContainerForThisGroup, rp.start, rp.end, rp.amount));
+            } else {
+                addRatePeriodToContainer(ratePeriodsContainerForThisGroup); 
+            }
+            groupDiv.querySelector(`[data-remove-group="${groupId}"]`).addEventListener('click', () => groupDiv.remove());
+            groupDiv.querySelector(`.add-rate-period-btn`).addEventListener('click', (e) => {
+                 const targetGroupId = e.target.dataset.addToGroup;
+                 const targetRateContainer = document.querySelector(`.rate-periods-container[data-rate-periods-for="${targetGroupId}"]`);
+                 addRatePeriodToContainer(targetRateContainer);
+            });
+        }
+        
+        /**
+         * Adds a new Rate Period to a container (Weekday Group or Override Rule).
+         * @param {HTMLElement} container - The container to add the rate period to.
+         * @param {string} [start="00:00"] - Initial start time.
+         * @param {string} [end="00:00"] - Initial end time.
+         * @param {number} [amount=0.00] - Initial rate amount.
+         */
+        function addRatePeriodToContainer(container, start = "00:00", end = "00:00", amount = 0.00) { 
+            const periodId = `ratePeriod-${container.dataset.ratePeriodsFor || 'override'}-${Date.now()}-${Math.random().toString(36).substring(2,7)}`;
+            const periodDiv = document.createElement('div');
+            periodDiv.id = periodId;
+            periodDiv.className = 'p-3 border border-gray-200 rounded-md grid grid-cols-1 sm:grid-cols-7 gap-2 items-center bg-white shadow-sm text-sm';
+            periodDiv.innerHTML = `
+                <div class="sm:col-span-2 grid grid-cols-1 gap-1">
+                    <label class="block text-xs font-medium text-gray-700">Start:</label>
+                    <input type="time" value="${start}" class="input-field text-xs rate-start-time">
+                </div>
+                <div class="sm:col-span-2 grid grid-cols-1 gap-1">
+                    <label class="block text-xs font-medium text-gray-700">End:</label>
+                    <input type="time" value="${end}" class="input-field text-xs rate-end-time">
+                </div>
+                <div class="sm:col-span-2 grid grid-cols-1 gap-1">
+                    <label class="block text-xs font-medium text-gray-700">Amount:</label>
+                    <input type="number" step="0.0001" value="${parseFloat(amount).toFixed(4)}" min="0" class="input-field text-xs rate-amount">
+                </div>
+                <button class="sm:col-span-1 remove-btn text-xs h-8 self-center mt-2 sm:mt-0" data-remove-period="${periodId}">Remove</button>
+            `;
+            container.appendChild(periodDiv);
+            periodDiv.querySelector(`[data-remove-period="${periodId}"]`).addEventListener('click', () => periodDiv.remove());
+        }
+
+        /**
+         * Adds a new Override Rule to the UI.
+         * @param {Array<Object>} [initialDates=null] - Array of initial date configurations.
+         * @param {Array<Object>} [initialRatePeriods=null] - Array of initial rate period configurations.
+         */
+        function addOverrideRule(initialDates = null, initialRatePeriods = null) { 
+            const overrideRulesContainer = document.getElementById('overrideRulesContainer'); // Get element here
+            overrideRuleCounter++;
+            const ruleId = `overrideRule-${overrideRuleCounter}`;
+            const ruleDiv = document.createElement('div');
+            ruleDiv.id = ruleId; ruleDiv.className = 'override-rule bg-purple-50';
+            ruleDiv.dataset.ruleNumber = overrideRuleCounter;
+            ruleDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-purple-700">Override Rule #${overrideRuleCounter}</h3>
+                    <button class="remove-btn" data-remove-override-rule="${ruleId}">Remove Override Rule</button>
+                </div>
+                <div class="mb-4">
+                    <h4 class="subsection-title text-md">Specific Dates for this Override</h4>
+                    <div class="override-dates-container space-y-2 mb-3" data-dates-for="${ruleId}"></div>
+                    <button class="add-btn text-xs add-override-date-btn" data-add-date-to="${ruleId}">+ Add Month/Day(s)</button>
+                </div>
+                <div>
+                    <h4 class="subsection-title text-md">Rate for these Override Dates</h4>
+                    <div class="override-rate-periods-container space-y-3" data-override-rates-for="${ruleId}"></div>
+                    <button class="add-btn text-xs add-override-rate-btn mt-3" data-add-override-rate-to="${ruleId}">+ Add Rate Period</button>
+                </div>
+            `;
+            overrideRulesContainer.appendChild(ruleDiv);
+            const datesContainer = ruleDiv.querySelector('.override-dates-container');
+            if (initialDates && initialDates.length > 0) {
+                initialDates.forEach(dateEntry => addDateEntryToOverride(datesContainer, dateEntry.month, dateEntry.days.join(',')));
+            } else { addDateEntryToOverride(datesContainer); }
+            const rateContainer = ruleDiv.querySelector('.override-rate-periods-container');
+            if (initialRatePeriods && initialRatePeriods.length > 0) {
+                 initialRatePeriods.forEach(rp => addRatePeriodToContainer(rateContainer, rp.start, rp.end, rp.amount));
+            } else { addRatePeriodToContainer(rateContainer, "00:00", "00:00", 0.00); }
+            ruleDiv.querySelector(`[data-remove-override-rule="${ruleId}"]`).addEventListener('click', () => ruleDiv.remove());
+            ruleDiv.querySelector('.add-override-date-btn').addEventListener('click', (e) => {
+                const targetDatesContainer = document.querySelector(`.override-dates-container[data-dates-for="${e.target.dataset.addDateTo}"]`);
+                addDateEntryToOverride(targetDatesContainer);
+            });
+            ruleDiv.querySelector('.add-override-rate-btn').addEventListener('click', (e) => {
+                const targetRateContainer = document.querySelector(`.override-rate-periods-container[data-override-rates-for="${e.target.dataset.addOverrideRateTo}"]`);
+                addRatePeriodToContainer(targetRateContainer);
+            });
+        }
+
+        /**
+         * Adds a month/day entry field to an Override Rule.
+         * @param {HTMLElement} container - The container for date entries.
+         * @param {string|number} [monthVal=''] - Initial month value.
+         * @param {string} [daysVal=''] - Initial days value (comma-separated).
+         */
+        function addDateEntryToOverride(container, monthVal = '', daysVal = '') { 
+            const entryId = `overrideDateEntry-${Date.now()}`;
+            const entryDiv = document.createElement('div');
+            entryDiv.id = entryId; entryDiv.className = 'grid grid-cols-1 sm:grid-cols-3 gap-2 items-end';
+            entryDiv.innerHTML = `
+                <div>
+                    <label class="input-label text-xs">Month (1-12):</label>
+                    <input type="number" min="1" max="12" value="${monthVal}" class="input-field text-xs override-month" placeholder="e.g., 12">
+                </div>
+                <div>
+                    <label class="input-label text-xs">Day(s) (comma-separated):</label>
+                    <input type="text" value="${daysVal}" class="input-field text-xs override-days" placeholder="e.g., 25,31">
+                </div>
+                <button class="remove-btn text-xs h-8 self-center sm:self-end" onclick="this.parentElement.remove()">Remove Date</button>
+            `;
+            container.appendChild(entryDiv);
+        }
+        
+        // =================================================================================
+        // --- VIRTUAL FILE: holiday_service.js ---
+        // =================================================================================
+
+        /**
+         * Fetches and displays public holidays for the given country/state.
+         */
+        async function fetchAndDisplayHolidays() {
+            const holidayCountryInput = document.getElementById('holidayCountry'); // Get element here
+            const holidayStateInput = document.getElementById('holidayState'); // Get element here
+            const fetchedHolidaysListDiv = document.getElementById('fetchedHolidaysList'); // Get element here
+
+            const countryCode = holidayCountryInput.value.trim().toUpperCase();
+            const stateCode = holidayStateInput.value.trim().toUpperCase();
+            const currentYear = new Date().getFullYear();
+
+            if (!countryCode) {
+                fetchedHolidaysListDiv.innerHTML = '<p class="text-gray-500">Please enter a Country Code.</p>';
+                return;
+            }
+
+            fetchedHolidaysListDiv.innerHTML = '<p class="text-gray-500">Fetching holidays...</p>';
+
+            try {
+                if (typeof window.Holidays !== 'function') {
+                    fetchedHolidaysListDiv.innerHTML = '<p class="text-red-600">Holiday library (date-holidays) not loaded correctly.</p>';
+                    console.error("window.Holidays constructor is not defined. Check library script inclusion and ensure it's the UMD build or ESM assigned to window.");
+                    return;
+                }
+                const hd = new window.Holidays(countryCode, stateCode || undefined); 
+                const holidays = hd.getHolidays(currentYear);
+
+                if (holidays && holidays.length > 0) {
+                    let listHTML = `<p class="font-semibold mb-1 text-gray-700">Public Holidays for ${countryCode}${stateCode ? ' ('+stateCode+')' : ''} - ${currentYear}:</p><ul class="list-disc list-inside space-y-0.5">`;
+                    holidays.forEach(holiday => {
+                        const dateStr = new Date(holiday.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                        listHTML += `<li><strong>${dateStr}:</strong> ${holiday.name} (${holiday.type})</li>`;
+                    });
+                    listHTML += '</ul>';
+                    fetchedHolidaysListDiv.innerHTML = listHTML;
+                } else {
+                    fetchedHolidaysListDiv.innerHTML = `<p class="text-yellow-600">No public holidays found for ${countryCode}${stateCode ? ' ('+stateCode+')' : ''} for ${currentYear}, or region might not be supported for specific holiday list.</p>`;
+                }
+            } catch (error) {
+                console.error("Error fetching holidays:", error);
+                let errorMsg = `Error fetching holidays for ${countryCode}${stateCode ? ' ('+stateCode+')' : ''}.`;
+                if (error.message && error.message.includes('country is not supported')) {
+                    errorMsg = `Country code '${countryCode}' is not supported by the library.`;
+                } else if (error.message && error.message.includes('state is not supported')) {
+                     errorMsg = `State/region code '${stateCode}' is not supported for country '${countryCode}'. Try without state code for country-wide holidays.`;
+                } else {
+                    errorMsg += " Please check the codes or console for details.";
+                }
+                fetchedHolidaysListDiv.innerHTML = `<p class="text-red-600">${errorMsg}</p>`;
+            }
+        }
+
+        // =================================================================================
+        // --- VIRTUAL FILE: validation.js ---
+        // =================================================================================
+
+        /**
+         * Finds items in allItems that are not present in coveredItems.
+         * @param {Array} allItems - The complete set of items.
+         * @param {Array} coveredItems - The set of items already covered.
+         * @returns {Array} - Items missing from coveredItems.
+         */
+        function getMissingItems(allItems, coveredItems) { return allItems.filter(item => !coveredItems.includes(item)); }
+        
+        /**
+         * Validates that a set of time ranges covers a full 24-hour period without gaps.
+         * @param {Array<Object>} rateTimeranges - Array of rate time range objects.
+         * @param {string} contextMessage - A message prefix for error reporting.
+         * @returns {string|null} - An error message string if validation fails, otherwise null.
+         */
+        function validateTimeRanges(rateTimeranges, contextMessage) { 
+            if (rateTimeranges.length === 0) return `${contextMessage}: No rate time ranges defined. Full day coverage is required.`;
+            rateTimeranges.sort((a, b) => a.start.localeCompare(b.start)); // Sort by start time
+            if (rateTimeranges[0].start !== "00:00") return `${contextMessage}: Time coverage must start at 00:00. Found start: ${rateTimeranges[0].start}.`;
+            for (let i = 0; i < rateTimeranges.length - 1; i++) {
+                if (rateTimeranges[i].end !== rateTimeranges[i+1].start) return `${contextMessage}: Gap found. Period ending ${rateTimeranges[i].end} is not followed by a period starting ${rateTimeranges[i].end}. Next starts at ${rateTimeranges[i+1].start}.`;
+            }
+            if (rateTimeranges[rateTimeranges.length - 1].end !== "00:00") return `${contextMessage}: Time coverage must end at 00:00 (covering up to midnight). Last period ends at ${rateTimeranges[rateTimeranges.length - 1].end}.`;
+            return null; 
+        }
+
+        // =================================================================================
+        // --- VIRTUAL FILE: json_generator.js ---
+        // =================================================================================
+
+        /**
+         * Parses and validates a set of rules (Standard or Holiday).
+         * @param {string} ruleContainerSelector - CSS selector for the rule container.
+         * @param {'standard'|'holiday'} ruleType - Type of rules being parsed.
+         * @param {Array<number>} allExpectedItems - Expected months or weekdays for full coverage.
+         * @param {string} itemTypeForMessage - String like "Month" or "Weekday" for error messages.
+         * @param {Array<string>} validationErrors - Array to push validation error messages into.
+         * @returns {{rules: Array<Object>, coveredItems: Set<number>}} - Parsed rules and covered items.
+         */
+        function parseAndValidateRuleSet(ruleContainerSelector, ruleType, allExpectedItems, itemTypeForMessage, validationErrors) { 
+            const rulesOutput = [];
+            const ruleDivs = document.querySelectorAll(ruleContainerSelector);
+            let allCoveredItemsInSet = new Set(); 
+            ruleDivs.forEach(ruleDiv => {
+                const ruleNum = ruleDiv.dataset.ruleNumber;
+                const contextPrefix = `${ruleType === 'standard' ? 'Standard Rule' : 'Holiday Month Rule'} #${ruleNum}`;
+                const monthCheckboxesContainer = ruleDiv.querySelector('.month-checkboxes-target > div > div.grid');
+                const selectedMonthsForRule = Array.from(monthCheckboxesContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+                if (selectedMonthsForRule.length === 0) { validationErrors.push(`${contextPrefix} has no months selected.`); return; }
+                selectedMonthsForRule.forEach(m => allCoveredItemsInSet.add(m)); // For overall month coverage check for this rule set
+                
+                const weekStructureForRule = [];
+                const weekdayGroupDivs = ruleDiv.querySelectorAll('.weekday-group');
+                if (weekdayGroupDivs.length === 0 && selectedMonthsForRule.length > 0) { 
+                    validationErrors.push(`${contextPrefix} (Months: ${selectedMonthsForRule.join(', ')}): No Weekday Groups defined.`);
+                }
+                
+                let allCoveredWeekdaysInRule = new Set(); // For checking weekday coverage within this specific rule
+                weekdayGroupDivs.forEach(groupDiv => {
+                    const groupNum = groupDiv.dataset.groupNumber;
+                    const groupContext = `${contextPrefix}, Weekday Group (ID part: ${groupNum})`; // Made context more specific
+                    const weekdayCheckboxesContainer = groupDiv.querySelector('.weekday-checkboxes-target > div > div.grid');
+                    const selectedWeekdaysForGroup = Array.from(weekdayCheckboxesContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+                    if (selectedWeekdaysForGroup.length === 0) { validationErrors.push(`${groupContext}: No weekdays selected.`); return; }
+                    selectedWeekdaysForGroup.forEach(wd => allCoveredWeekdaysInRule.add(wd));
+                    
+                    const rateTimeranges = [];
+                    const ratePeriodDivs = groupDiv.querySelectorAll('.rate-periods-container > div[id^="ratePeriod-"]');
+                    if (ratePeriodDivs.length === 0 && selectedWeekdaysForGroup.length > 0) { 
+                        validationErrors.push(`${groupContext} for days [${selectedWeekdaysForGroup.map(val => WEEKDAYS_DATA.find(d=>d.value===val)?.name).join(', ')}]: No rate time ranges defined.`);
+                    }
+                    ratePeriodDivs.forEach(periodDiv => {
+                        const startInput = periodDiv.querySelector('.rate-start-time');
+                        const endInput = periodDiv.querySelector('.rate-end-time');
+                        const amountInput = periodDiv.querySelector('.rate-amount');
+                        if (startInput && endInput && amountInput && startInput.value && endInput.value && amountInput.value !== '') {
+                            rateTimeranges.push({ start: startInput.value, end: endInput.value, amount: parseFloat(parseFloat(amountInput.value).toFixed(4)) });
+                        } else if (selectedWeekdaysForGroup.length > 0) { // Only error if the group itself is active
+                             validationErrors.push(`${groupContext}: An incomplete rate period was found.`);
+                        }
+                    });
+                    const timeValidationError = validateTimeRanges(rateTimeranges, groupContext);
+                    if (timeValidationError) validationErrors.push(timeValidationError);
+
+                    if (rateTimeranges.length > 0 && !timeValidationError) {
+                        weekStructureForRule.push({ iso_weekday: selectedWeekdaysForGroup.sort((a, b) => a - b), day_structure: { rate_timeranges: rateTimeranges } });
+                    }
+                });
+                // Check weekday coverage for this specific month rule
+                const missingWeekdaysInRule = getMissingItems(ALL_WEEKDAY_NUMBERS, Array.from(allCoveredWeekdaysInRule));
+                if (missingWeekdaysInRule.length > 0 && selectedMonthsForRule.length > 0) { // Only if rule is active
+                    validationErrors.push(`${contextPrefix} (Months: ${selectedMonthsForRule.map(val=>MONTHS_DATA.find(m=>m.value===val)?.name).join(', ')}): Weekdays [${missingWeekdaysInRule.map(val => WEEKDAYS_DATA.find(d=>d.value===val)?.name).join(', ')}] are not covered.`);
+                }
+                
+                if (weekStructureForRule.length > 0) { 
+                    rulesOutput.push({ month: selectedMonthsForRule.sort((a, b) => a - b), week_structure: weekStructureForRule });
+                }
+            });
+            return { rules: rulesOutput, coveredItems: allCoveredItemsInSet };
+        }
+
+        /**
+         * Validates all configured rules and generates the final JSON.
+         */
+        function generateJsonWithValidation() { 
+            const jsonOutputTextarea = document.getElementById('jsonOutput'); // Get element here
+            const copyJsonBtn = document.getElementById('copyJsonBtn'); // Get element here
+            const holidayCountryInput = document.getElementById('holidayCountry');
+            const holidayStateInput = document.getElementById('holidayState');
+
+
+            let validationErrors = [];
+            const finalJson = {};
+
+            // 1. Standard Tariff Rules
+            const standardRulesResult = parseAndValidateRuleSet('#tariffRulesContainer .tariff-rule', 'standard', ALL_MONTH_NUMBERS, 'Month', validationErrors);
+            if (standardRulesResult.rules.length > 0) {
+                finalJson.month_structure = standardRulesResult.rules;
+                const missingStandardMonths = getMissingItems(ALL_MONTH_NUMBERS, Array.from(standardRulesResult.coveredItems));
+                if (missingStandardMonths.length > 0) { validationErrors.push(`Overall Standard Tariff: Months [${missingStandardMonths.map(val=>MONTHS_DATA.find(m=>m.value===val)?.name).join(', ')}] are not covered.`); }
+            } else if (document.querySelectorAll('#tariffRulesContainer .tariff-rule').length > 0) { 
+                // Errors already pushed by parseAndValidateRuleSet if rules exist but are invalid
+            } else { 
+                validationErrors.push("No Standard Tariff Rules defined. At least one standard rule covering all months is required.");
+            }
+
+            // 2. Country Holidays
+            const holidayCountry = holidayCountryInput.value.trim();
+            const holidayState = holidayStateInput.value.trim();
+            const holidayRuleDivs = document.querySelectorAll('#holidayMonthRulesContainer .holiday-month-rule');
+
+            if (holidayRuleDivs.length > 0 || holidayCountry || holidayState) { // Process if any part of holiday section is used
+                if (!holidayCountry) validationErrors.push("Country Holidays: Country code is missing.");
+                
+                const holidayRulesResult = parseAndValidateRuleSet('#holidayMonthRulesContainer .holiday-month-rule', 'holiday', ALL_MONTH_NUMBERS, 'Month', validationErrors);
+                if (holidayRulesResult.rules.length > 0) { // Only add country_holidays if there are valid rules
+                    finalJson.country_holidays = { country: holidayCountry };
+                    if (holidayState) { 
+                        finalJson.country_holidays.state = holidayState;
+                    }
+                    finalJson.country_holidays.month_structure = holidayRulesResult.rules;
+
+                    const missingHolidayMonths = getMissingItems(ALL_MONTH_NUMBERS, Array.from(holidayRulesResult.coveredItems));
+                    if (missingHolidayMonths.length > 0) { 
+                        validationErrors.push(`Country Holidays Definition: Months [${missingHolidayMonths.map(val=>MONTHS_DATA.find(m=>m.value===val)?.name).join(', ')}] are not covered within the holiday rules.`); 
+                    }
+                } else if (holidayRuleDivs.length > 0 && validationErrors.length === 0) { 
+                    // This case means rules were defined, but parseAndValidateRuleSet found issues within them,
+                    // so validationErrors would already be populated.
+                    // If no valid rules produced, but country/state was entered, it's still okay if no rules were attempted.
+                }
+            }
+
+            // 3. Override Days
+            const overrideRulesOutput = [];
+            const overrideRuleDivs = document.querySelectorAll('#overrideRulesContainer .override-rule');
+            overrideRuleDivs.forEach(ruleDiv => {
+                const ruleNum = ruleDiv.dataset.ruleNumber;
+                const overrideContext = `Override Rule #${ruleNum}`;
+                const annualDates = [];
+                const dateEntryDivs = ruleDiv.querySelectorAll('.override-dates-container .grid');
+                if(dateEntryDivs.length === 0) { validationErrors.push(`${overrideContext}: No specific dates (month/day) defined.`); }
+                
+                dateEntryDivs.forEach(dateDiv => {
+                    const monthInput = dateDiv.querySelector('.override-month');
+                    const daysInput = dateDiv.querySelector('.override-days');
+                    if (monthInput && daysInput && monthInput.value && daysInput.value) {
+                        const month = parseInt(monthInput.value);
+                        const days = daysInput.value.split(',').map(d => parseInt(d.trim())).filter(d => !isNaN(d) && d >= 1 && d <= 31);
+                        if (month >= 1 && month <= 12 && days.length > 0) { annualDates.push({ month, days: days.sort((a,b)=>a-b) }); } 
+                        else { validationErrors.push(`${overrideContext}: Invalid month or day entry found.`); }
+                    } else if (monthInput.value || daysInput.value) { // Only error if partially filled
+                         validationErrors.push(`${overrideContext}: Incomplete month/day entry found.`);
+                    }
+                });
+
+                const rateTimeranges = [];
+                const ratePeriodDivs = ruleDiv.querySelectorAll('.override-rate-periods-container > div[id^="ratePeriod-"]');
+                if (ratePeriodDivs.length === 0 && annualDates.length > 0) { 
+                    validationErrors.push(`${overrideContext}: No rate time ranges defined for the specified dates.`);
+                }
+                ratePeriodDivs.forEach(periodDiv => {
+                    const startInput = periodDiv.querySelector('.rate-start-time');
+                    const endInput = periodDiv.querySelector('.rate-end-time');
+                    const amountInput = periodDiv.querySelector('.rate-amount');
+                    if (startInput && endInput && amountInput && startInput.value && endInput.value && amountInput.value !== '') {
+                        rateTimeranges.push({ start: startInput.value, end: endInput.value, amount: parseFloat(parseFloat(amountInput.value).toFixed(4)) });
+                    } else if (annualDates.length > 0) { // Only error if dates are set and rate is incomplete
+                         validationErrors.push(`${overrideContext}: An incomplete rate period was found for override dates.`);
+                    }
+                });
+                const timeValidationError = validateTimeRanges(rateTimeranges, overrideContext);
+                if (timeValidationError) validationErrors.push(timeValidationError);
+
+                if (annualDates.length > 0 && rateTimeranges.length > 0 && !timeValidationError) {
+                    overrideRulesOutput.push({ annual_date: annualDates, day_structure: { rate_timeranges: rateTimeranges } });
+                }
+            });
+            if (overrideRulesOutput.length > 0) { 
+                finalJson.override = overrideRulesOutput; 
+            }
+
+            // Final decision based on validation
+            if (validationErrors.length > 0) {
+                showStatusMessage(`Validation Errors Found (Fix and Regenerate):\n- ${validationErrors.join('\n- ')}`, true);
+                jsonOutputTextarea.value = ""; copyJsonBtn.disabled = true; return;
+            }
+            if (Object.keys(finalJson).length === 0 || !finalJson.month_structure) { // month_structure is mandatory
+                 showStatusMessage("No valid tariff data to generate. Ensure at least standard tariff rules are fully configured and valid.", true);
+                 jsonOutputTextarea.value = ""; copyJsonBtn.disabled = true; return;
+            }
+
+            jsonOutputTextarea.value = JSON.stringify(finalJson, null, 2);
+            copyJsonBtn.disabled = false;
+            showStatusMessage("JSON generated successfully after passing all validations!", false);
+        }
+
+        // =================================================================================
+        // --- VIRTUAL FILE: example_loader.js ---
+        // =================================================================================
+
+        /**
+         * Clears all current configurations from the UI and resets state.
+         */
+        function clearAllConfigurations() {
+            const tariffRulesContainer = document.getElementById('tariffRulesContainer');
+            const holidayMonthRulesContainer = document.getElementById('holidayMonthRulesContainer');
+            const overrideRulesContainer = document.getElementById('overrideRulesContainer');
+            const holidayCountryInput = document.getElementById('holidayCountry');
+            const holidayStateInput = document.getElementById('holidayState');
+            const fetchedHolidaysListDiv = document.getElementById('fetchedHolidaysList');
+            const jsonOutputTextarea = document.getElementById('jsonOutput');
+            const copyJsonBtn = document.getElementById('copyJsonBtn');
+            const statusMessageDiv = document.getElementById('statusMessage');
+
+            tariffRulesContainer.innerHTML = '';
+            holidayMonthRulesContainer.innerHTML = '';
+            overrideRulesContainer.innerHTML = '';
+
+            holidayCountryInput.value = '';
+            holidayStateInput.value = '';
+            fetchedHolidaysListDiv.innerHTML = '<p class="text-gray-500">Awaiting country/state input...</p>';
+            
+            jsonOutputTextarea.value = '';
+            copyJsonBtn.disabled = true;
+            statusMessageDiv.textContent = '';
+            statusMessageDiv.className = 'mb-2 text-sm font-medium text-center p-2 rounded-md';
+
+            tariffRuleCounter = 0;
+            holidayMonthRuleCounter = 0;
+            overrideRuleCounter = 0;
+            weekdayGroupCounter = 0;
+        }
+
+        /** Loads a flat rate tariff example. */
+        function loadFlatRateExample() {
+            clearAllConfigurations();
+            addTariffRuleOrHolidayMonthRule('standard', ALL_MONTH_NUMBERS, [
+                { weekdays: ALL_WEEKDAY_NUMBERS, ratePeriods: [{ start: "00:00", end: "00:00", amount: 0.15 }] }
+            ]);
+            generateJsonWithValidation();
+            showStatusMessage("Flat Rate example loaded.", false);
+            fetchAndDisplayHolidays(); 
+        }
+
+        /** Loads a dual rate tariff example. */
+        function loadDualRateExample() {
+            clearAllConfigurations();
+            addTariffRuleOrHolidayMonthRule('standard', ALL_MONTH_NUMBERS, [
+                { 
+                    weekdays: ALL_WEEKDAY_NUMBERS, 
+                    ratePeriods: [
+                        { start: "00:00", end: "07:00", amount: 0.10 }, 
+                        { start: "07:00", end: "00:00", amount: 0.25 }  
+                    ] 
+                }
+            ]);
+            generateJsonWithValidation();
+            showStatusMessage("Dual Rate example loaded.", false);
+            fetchAndDisplayHolidays(); 
+        }
+
+        /** Loads a dual rate with weekends off-peak example. */
+        function loadDualRateWeekendsOffpeakExample() {
+            clearAllConfigurations();
+            addTariffRuleOrHolidayMonthRule('standard', ALL_MONTH_NUMBERS, [
+                { 
+                    weekdays: [1, 2, 3, 4, 5], 
+                    ratePeriods: [
+                        { start: "00:00", end: "07:00", amount: 0.10 }, 
+                        { start: "07:00", end: "00:00", amount: 0.25 }  
+                    ] 
+                },
+                { 
+                    weekdays: [6, 7], 
+                    ratePeriods: [{ start: "00:00", end: "00:00", amount: 0.10 }] 
+                }
+            ]);
+            generateJsonWithValidation();
+            showStatusMessage("Dual Rate (Weekends Off-peak) example loaded.", false);
+            fetchAndDisplayHolidays();
+        }
+        
+        /** Loads the fully complicated example with holidays and overrides. */
+        function loadFullyComplicatedExample() {
+            const holidayCountryInput = document.getElementById('holidayCountry');
+            const holidayStateInput = document.getElementById('holidayState');
+
+            clearAllConfigurations();
+            addTariffRuleOrHolidayMonthRule('standard', [1, 2, 3, 10, 11, 12], [ 
+                { weekdays: [1, 2, 3, 4, 5], ratePeriods: [{ start: "00:00", end: "12:00", amount: 0.10 }, { start: "12:00", end: "00:00", amount: 0.20 }] }, 
+                { weekdays: [6, 7], ratePeriods: [{ start: "00:00", end: "00:00", amount: 0.10 }] } 
+            ]);
+            addTariffRuleOrHolidayMonthRule('standard', [4, 5, 6, 7, 8, 9], [ 
+                { weekdays: ALL_WEEKDAY_NUMBERS, ratePeriods: [{ start: "00:00", end: "00:00", amount: 0.10 }] } 
+            ]);
+
+            holidayCountryInput.value = "AU";
+            holidayStateInput.value = "ACT"; 
+            addTariffRuleOrHolidayMonthRule('holiday', [1], [ 
+                { weekdays: ALL_WEEKDAY_NUMBERS, ratePeriods: [{ start: "00:00", end: "00:00", amount: 0.01 }] }
+            ]);
+            addTariffRuleOrHolidayMonthRule('holiday', [2,3,4,5,6,7,8,9,10,11,12], [ 
+                { weekdays: ALL_WEEKDAY_NUMBERS, ratePeriods: [{ start: "00:00", end: "00:00", amount: 0.02 }] }
+            ]);
+
+            addOverrideRule(
+                [{ month: 12, days: [25, 31] }, { month: 2, days: [29] }],
+                [{ start: "00:00", end: "00:00", amount: 0.10 }]
+            );
+            generateJsonWithValidation(); 
+            showStatusMessage("Fully Complicated example loaded.", false);
+            fetchAndDisplayHolidays(); 
+        }
+
+        // =================================================================================
+        // --- VIRTUAL FILE: app.js (Main Application Logic) ---
+        // =================================================================================
+        
+        /**
+         * Initializes the application, sets up global DOM elements and event listeners.
+         */
+        function initApp() {
+            // Cache global DOM elements that are frequently accessed or critical for setup
+            const addTariffRuleBtn = document.getElementById('addTariffRuleBtn');
+            const addHolidayMonthRuleBtn = document.getElementById('addHolidayMonthRuleBtn');
+            const addOverrideRuleBtn = document.getElementById('addOverrideRuleBtn');
+            const generateJsonBtn = document.getElementById('generateJsonBtn');
+            const copyJsonBtn = document.getElementById('copyJsonBtn');
+            const holidayCountryInput = document.getElementById('holidayCountry');
+            const holidayStateInput = document.getElementById('holidayState');
+            
+            // Quick Start Buttons
+            const loadFlatRateBtn = document.getElementById('loadFlatRateBtn');
+            const loadDualRateBtn = document.getElementById('loadDualRateBtn');
+            const loadDualRateWeekendsOffpeakBtn = document.getElementById('loadDualRateWeekendsOffpeakBtn');
+            const loadFullyComplicatedBtn = document.getElementById('loadFullyComplicatedBtn');
+
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+
+            // Setup main event listeners
+            addTariffRuleBtn.addEventListener('click', () => addTariffRuleOrHolidayMonthRule('standard'));
+            addHolidayMonthRuleBtn.addEventListener('click', () => addTariffRuleOrHolidayMonthRule('holiday'));
+            addOverrideRuleBtn.addEventListener('click', addOverrideRule);
+            
+            generateJsonBtn.addEventListener('click', generateJsonWithValidation);
+            copyJsonBtn.addEventListener('click', copyJsonToClipboard);
+
+            // Event listeners for Quick Start buttons
+            loadFlatRateBtn.addEventListener('click', loadFlatRateExample);
+            loadDualRateBtn.addEventListener('click', loadDualRateExample);
+            loadDualRateWeekendsOffpeakBtn.addEventListener('click', loadDualRateWeekendsOffpeakExample);
+            loadFullyComplicatedBtn.addEventListener('click', loadFullyComplicatedExample);
+
+            // Event listeners for holiday fetching
+            const debouncedFetchHolidays = debounce(fetchAndDisplayHolidays, 500);
+            holidayCountryInput.addEventListener('input', debouncedFetchHolidays);
+            holidayStateInput.addEventListener('input', debouncedFetchHolidays);
+
+            // Load a default example on page load
+            loadFlatRateExample(); 
+        }
+
+        // --- Start the application ---
+        document.addEventListener('DOMContentLoaded', initApp); // Changed from init to initApp
+    </script>
+
+</body>
+</html>
