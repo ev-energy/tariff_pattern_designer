@@ -212,14 +212,6 @@
         let weekdayGroupCounter = 0; 
 
         // =================================================================================
-        // --- VIRTUAL FILE: dom_elements.js ---
-        // =================================================================================
-        // This section would typically be where DOM elements are cached if not passed around.
-        // For this single-file structure, elements are mostly accessed directly via getElementById
-        // or passed as arguments to functions. We'll define them where they are first needed
-        // or in the main init function for broader scope.
-
-        // =================================================================================
         // --- VIRTUAL FILE: utils.js ---
         // =================================================================================
 
@@ -243,11 +235,10 @@
          * @param {boolean} [isError=false] - True if the message is an error, false otherwise.
          */
         function showStatusMessage(message, isError = false) { 
-            const statusMessageDiv = document.getElementById('statusMessage'); // Get element here
+            const statusMessageDiv = document.getElementById('statusMessage');
             statusMessageDiv.innerHTML = message.replace(/\n/g, '<br>'); 
             statusMessageDiv.className = `mb-2 text-sm font-medium text-center p-2 rounded-md ${isError ? 'text-red-700 bg-red-100 border border-red-300' : 'text-green-700 bg-green-100 border border-green-300'}`;
-            if (isError) statusMessageDiv.classList.add('text-left'); 
-            else statusMessageDiv.classList.remove('text-left');
+            statusMessageDiv.classList.toggle('text-left', isError); // Add text-left for errors, remove for success
             if (!isError) { 
                 setTimeout(() => {
                     if (statusMessageDiv.innerHTML === message.replace(/\n/g, '<br>') && !statusMessageDiv.classList.contains('text-red-700')) {
@@ -262,7 +253,7 @@
          * Copies the generated JSON from the textarea to the clipboard.
          */
         function copyJsonToClipboard() {
-            const jsonOutputTextarea = document.getElementById('jsonOutput'); // Get element here
+            const jsonOutputTextarea = document.getElementById('jsonOutput');
             if (!jsonOutputTextarea.value) {
                 showStatusMessage("Nothing to copy. Generate JSON first.", true);
                 return;
@@ -309,14 +300,6 @@
 
         /**
          * Creates a group of checkboxes with a "Select All" option.
-         * @param {Array<Object>} items - Array of items to create checkboxes for. Each item has {name, value}.
-         * @param {string} groupNamePrefix - A prefix for generating unique IDs/names.
-         * @param {string} allText - Text for the "Select All" checkbox label.
-         * @param {Function} itemChangeHandler - Handler for individual checkbox changes.
-         * @param {Function} allChangeHandler - Handler for "Select All" checkbox changes.
-         * @param {boolean} [initiallySelectAll=false] - Whether all items should be selected initially.
-         * @param {Array<number|string>} [initialSelection=null] - Array of values to be selected initially.
-         * @returns {HTMLElement} - The container div for the checkbox group.
          */
         function createCheckboxGroup(items, groupNamePrefix, allText, itemChangeHandler, allChangeHandler, initiallySelectAll = false, initialSelection = null) {
             const uniqueId = `${groupNamePrefix}-${Date.now()}-${Math.random().toString(36).substring(2,7)}`;
@@ -348,14 +331,12 @@
                 itemContainer.appendChild(label);
             });
             container.appendChild(itemContainer);
-            setTimeout(() => itemChangeHandler(allCheckbox, itemContainer), 0); // Ensure correct initial state of "Select All"
+            setTimeout(() => itemChangeHandler(allCheckbox, itemContainer), 0);
             return container; 
         }
 
         /**
          * Handles changes to the "Select All" checkbox.
-         * @param {HTMLInputElement} allCheckbox - The "Select All" checkbox element.
-         * @param {HTMLElement} itemContainer - The container of individual item checkboxes.
          */
         function handleSelectAllChange(allCheckbox, itemContainer) { 
             const itemCbs = itemContainer.querySelectorAll('input[type="checkbox"]');
@@ -365,8 +346,6 @@
 
         /**
          * Handles changes to individual item checkboxes, updating the "Select All" state.
-         * @param {HTMLInputElement} allCheckbox - The "Select All" checkbox element.
-         * @param {HTMLElement} itemContainer - The container of individual item checkboxes.
          */
         function handleItemCheckboxChange(allCheckbox, itemContainer) { 
             const itemCbs = Array.from(itemContainer.querySelectorAll('input[type="checkbox"]'));
@@ -378,13 +357,10 @@
 
         /**
          * Adds a new Tariff Rule or Holiday Month Rule to the UI.
-         * @param {'standard'|'holiday'} type - The type of rule to add.
-         * @param {Array<number>} [initialMonths=null] - Array of month values to pre-select.
-         * @param {Array<Object>} [initialWeekdayGroups=null] - Array of weekday group configurations.
          */
         function addTariffRuleOrHolidayMonthRule(type, initialMonths = null, initialWeekdayGroups = null) { 
-            const tariffRulesContainer = document.getElementById('tariffRulesContainer'); // Get element here
-            const holidayMonthRulesContainer = document.getElementById('holidayMonthRulesContainer'); // Get element here
+            const tariffRulesContainer = document.getElementById('tariffRulesContainer');
+            const holidayMonthRulesContainer = document.getElementById('holidayMonthRulesContainer');
 
             let ruleCounter, ruleContainer, ruleClass, titlePrefix;
             if (type === 'standard') {
@@ -432,11 +408,6 @@
 
         /**
          * Adds a new Weekday Group to a Tariff Rule or Holiday Month Rule.
-         * @param {HTMLElement} container - The container to add the weekday group to.
-         * @param {string} parentRuleId - The ID of the parent rule.
-         * @param {number} parentRuleNum - The number of the parent rule (for display).
-         * @param {Array<number>} [initialWeekdays=null] - Array of weekday values to pre-select.
-         * @param {Array<Object>} [initialRatePeriods=null] - Array of rate period configurations.
          */
         function addWeekdayGroup(container, parentRuleId, parentRuleNum, initialWeekdays = null, initialRatePeriods = null) { 
             weekdayGroupCounter++; 
@@ -479,42 +450,73 @@
         
         /**
          * Adds a new Rate Period to a container (Weekday Group or Override Rule).
-         * @param {HTMLElement} container - The container to add the rate period to.
-         * @param {string} [start="00:00"] - Initial start time.
-         * @param {string} [end="00:00"] - Initial end time.
-         * @param {number} [amount=0.00] - Initial rate amount.
          */
         function addRatePeriodToContainer(container, start = "00:00", end = "00:00", amount = 0.00) { 
             const periodId = `ratePeriod-${container.dataset.ratePeriodsFor || 'override'}-${Date.now()}-${Math.random().toString(36).substring(2,7)}`;
             const periodDiv = document.createElement('div');
             periodDiv.id = periodId;
             periodDiv.className = 'p-3 border border-gray-200 rounded-md grid grid-cols-1 sm:grid-cols-7 gap-2 items-center bg-white shadow-sm text-sm';
-            periodDiv.innerHTML = `
-                <div class="sm:col-span-2 grid grid-cols-1 gap-1">
-                    <label class="block text-xs font-medium text-gray-700">Start:</label>
-                    <input type="time" value="${start}" class="input-field text-xs rate-start-time">
-                </div>
-                <div class="sm:col-span-2 grid grid-cols-1 gap-1">
-                    <label class="block text-xs font-medium text-gray-700">End:</label>
-                    <input type="time" value="${end}" class="input-field text-xs rate-end-time">
-                </div>
-                <div class="sm:col-span-2 grid grid-cols-1 gap-1">
-                    <label class="block text-xs font-medium text-gray-700">Amount:</label>
-                    <input type="number" step="0.0001" value="${parseFloat(amount).toFixed(4)}" min="0" class="input-field text-xs rate-amount">
-                </div>
-                <button class="sm:col-span-1 remove-btn text-xs h-8 self-center mt-2 sm:mt-0" data-remove-period="${periodId}">Remove</button>
+            
+            const createTimeInput = (initialValue, className) => {
+                const input = document.createElement('input');
+                input.type = 'time';
+                input.value = initialValue;
+                input.className = `input-field text-xs ${className}`;
+                input.step = "1800"; // Suggest 30-minute steps to browser
+                input.addEventListener('input', (e) => { // Enforce :00 or :30 on input
+                    const timeParts = e.target.value.split(':');
+                    if (timeParts.length === 2) {
+                        let hours = parseInt(timeParts[0], 10);
+                        let minutes = parseInt(timeParts[1], 10);
+                        if (!isNaN(hours) && !isNaN(minutes)) {
+                            if (minutes !== 0 && minutes !== 30) {
+                                minutes = (minutes < 15 || minutes >= 45) ? 0 : 30; 
+                                e.target.value = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                            }
+                        }
+                    }
+                });
+                return input;
+            };
+
+            const startLabelDiv = document.createElement('div');
+            startLabelDiv.className = 'sm:col-span-2 grid grid-cols-1 gap-1';
+            startLabelDiv.innerHTML = `<label class="block text-xs font-medium text-gray-700">Start:</label>`;
+            const startTimeInput = createTimeInput(start, 'rate-start-time');
+            startLabelDiv.appendChild(startTimeInput);
+
+            const endLabelDiv = document.createElement('div');
+            endLabelDiv.className = 'sm:col-span-2 grid grid-cols-1 gap-1';
+            endLabelDiv.innerHTML = `<label class="block text-xs font-medium text-gray-700">End:</label>`;
+            const endTimeInput = createTimeInput(end, 'rate-end-time');
+            endLabelDiv.appendChild(endTimeInput);
+            
+            const amountDiv = document.createElement('div');
+            amountDiv.className = 'sm:col-span-2 grid grid-cols-1 gap-1';
+            amountDiv.innerHTML = `
+                <label class="block text-xs font-medium text-gray-700">Amount:</label>
+                <input type="number" step="0.0001" value="${parseFloat(amount).toFixed(4)}" min="0" class="input-field text-xs rate-amount">
             `;
+
+            const removeButton = document.createElement('button');
+            removeButton.className = 'sm:col-span-1 remove-btn text-xs h-8 self-center mt-2 sm:mt-0';
+            removeButton.textContent = 'Remove';
+            removeButton.dataset.removePeriod = periodId;
+            removeButton.onclick = () => periodDiv.remove();
+
+            periodDiv.appendChild(startLabelDiv);
+            periodDiv.appendChild(endLabelDiv);
+            periodDiv.appendChild(amountDiv);
+            periodDiv.appendChild(removeButton);
+
             container.appendChild(periodDiv);
-            periodDiv.querySelector(`[data-remove-period="${periodId}"]`).addEventListener('click', () => periodDiv.remove());
         }
 
         /**
          * Adds a new Override Rule to the UI.
-         * @param {Array<Object>} [initialDates=null] - Array of initial date configurations.
-         * @param {Array<Object>} [initialRatePeriods=null] - Array of initial rate period configurations.
          */
         function addOverrideRule(initialDates = null, initialRatePeriods = null) { 
-            const overrideRulesContainer = document.getElementById('overrideRulesContainer'); // Get element here
+            const overrideRulesContainer = document.getElementById('overrideRulesContainer'); 
             overrideRuleCounter++;
             const ruleId = `overrideRule-${overrideRuleCounter}`;
             const ruleDiv = document.createElement('div');
@@ -558,9 +560,6 @@
 
         /**
          * Adds a month/day entry field to an Override Rule.
-         * @param {HTMLElement} container - The container for date entries.
-         * @param {string|number} [monthVal=''] - Initial month value.
-         * @param {string} [daysVal=''] - Initial days value (comma-separated).
          */
         function addDateEntryToOverride(container, monthVal = '', daysVal = '') { 
             const entryId = `overrideDateEntry-${Date.now()}`;
@@ -588,9 +587,9 @@
          * Fetches and displays public holidays for the given country/state.
          */
         async function fetchAndDisplayHolidays() {
-            const holidayCountryInput = document.getElementById('holidayCountry'); // Get element here
-            const holidayStateInput = document.getElementById('holidayState'); // Get element here
-            const fetchedHolidaysListDiv = document.getElementById('fetchedHolidaysList'); // Get element here
+            const holidayCountryInput = document.getElementById('holidayCountry'); 
+            const holidayStateInput = document.getElementById('holidayState'); 
+            const fetchedHolidaysListDiv = document.getElementById('fetchedHolidaysList'); 
 
             const countryCode = holidayCountryInput.value.trim().toUpperCase();
             const stateCode = holidayStateInput.value.trim().toUpperCase();
@@ -643,28 +642,97 @@
 
         /**
          * Finds items in allItems that are not present in coveredItems.
-         * @param {Array} allItems - The complete set of items.
-         * @param {Array} coveredItems - The set of items already covered.
-         * @returns {Array} - Items missing from coveredItems.
          */
         function getMissingItems(allItems, coveredItems) { return allItems.filter(item => !coveredItems.includes(item)); }
         
         /**
-         * Validates that a set of time ranges covers a full 24-hour period without gaps.
-         * @param {Array<Object>} rateTimeranges - Array of rate time range objects.
+         * Converts "HH:MM" time string to minutes from midnight.
+         * @param {string} timeStr - The time string (e.g., "14:30").
+         * @returns {number} - Time in minutes from midnight.
+         */
+        function timeStringToMinutes(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        /**
+         * Validates that a set of time ranges covers a full 24-hour period without gaps or overlaps,
+         * and adheres to half-hour increments.
+         * @param {Array<Object>} rateTimeranges - Array of rate time range objects {start, end, amount}.
          * @param {string} contextMessage - A message prefix for error reporting.
          * @returns {string|null} - An error message string if validation fails, otherwise null.
          */
-        function validateTimeRanges(rateTimeranges, contextMessage) { 
-            if (rateTimeranges.length === 0) return `${contextMessage}: No rate time ranges defined. Full day coverage is required.`;
-            rateTimeranges.sort((a, b) => a.start.localeCompare(b.start)); // Sort by start time
-            if (rateTimeranges[0].start !== "00:00") return `${contextMessage}: Time coverage must start at 00:00. Found start: ${rateTimeranges[0].start}.`;
-            for (let i = 0; i < rateTimeranges.length - 1; i++) {
-                if (rateTimeranges[i].end !== rateTimeranges[i+1].start) return `${contextMessage}: Gap found. Period ending ${rateTimeranges[i].end} is not followed by a period starting ${rateTimeranges[i].end}. Next starts at ${rateTimeranges[i+1].start}.`;
+        function validateTimeRanges(rateTimeranges, contextMessage) {
+            if (!rateTimeranges || rateTimeranges.length === 0) {
+                return `${contextMessage}: No rate time ranges defined. Full day coverage is required.`;
             }
-            if (rateTimeranges[rateTimeranges.length - 1].end !== "00:00") return `${contextMessage}: Time coverage must end at 00:00 (covering up to midnight). Last period ends at ${rateTimeranges[rateTimeranges.length - 1].end}.`;
-            return null; 
+
+            const minuteCoverage = new Array(1440).fill(0); // 1440 minutes in a day (24 * 60)
+
+            for (const r of rateTimeranges) {
+                if (!r.start || !r.end) {
+                    return `${contextMessage}: A rate period is missing a start or end time.`;
+                }
+                let startMinutes = timeStringToMinutes(r.start);
+                let endMinutes = timeStringToMinutes(r.end);
+
+                if (startMinutes % 30 !== 0) {
+                    return `${contextMessage}: Start time ${r.start} must be on a :00 or :30 mark.`;
+                }
+                if (r.end !== "00:00" && (endMinutes % 30 !== 0)) {
+                    return `${contextMessage}: End time ${r.end} must be on a :00 or :30 mark (or be "00:00" for end of day).`;
+                }
+                
+                let effectiveEndMinutes = (r.end === "00:00") ? 1440 : endMinutes;
+
+                // Handle the case of a single 00:00 to 00:00 range (full day coverage)
+                if (startMinutes === 0 && effectiveEndMinutes === 1440) {
+                    for (let m = 0; m < 1440; m++) {
+                        minuteCoverage[m]++;
+                        if (minuteCoverage[m] > 1) {
+                            return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} due to full-day period ${r.start}-${r.end} conflicting with another.`;
+                        }
+                    }
+                    continue; // Move to next range if this one is a valid full day
+                }
+
+                // Check for invalid duration (start >= end, unless it's a valid midnight span or the special 00:00-00:00)
+                if (startMinutes >= effectiveEndMinutes && !(startMinutes > endMinutes && effectiveEndMinutes !== 1440) ) { // start > end is only ok if it spans midnight
+                     return `${contextMessage}: Period ${r.start}-${r.end} has zero, negative, or invalid duration. End time must be after start time.`;
+                }
+
+
+                if (startMinutes < effectiveEndMinutes) { // Standard range (not spanning midnight)
+                    for (let m = startMinutes; m < effectiveEndMinutes; m++) {
+                        minuteCoverage[m]++;
+                        if (minuteCoverage[m] > 1) {
+                            return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} due to period ${r.start}-${r.end}.`;
+                        }
+                    }
+                } else { // Range spans midnight (e.g., 22:00 to 06:00)
+                    // Part 1: From start time to midnight (1440 minutes)
+                    for (let m = startMinutes; m < 1440; m++) {
+                        minuteCoverage[m]++;
+                        if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} (first part of span ${r.start}-${r.end}).`;
+                    }
+                    // Part 2: From midnight (0 minutes) to end time
+                    for (let m = 0; m < effectiveEndMinutes; m++) { // effectiveEndMinutes here would be the endMinutes for the next day
+                        minuteCoverage[m]++;
+                        if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} (second part of span ${r.start}-${r.end}).`;
+                    }
+                }
+            }
+
+            // Check for full coverage (no gaps)
+            for (let m = 0; m < 1440; m++) {
+                if (minuteCoverage[m] === 0) {
+                    return `${contextMessage}: Gap in time coverage at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')}. Full 24-hour coverage is required.`;
+                }
+            }
+            
+            return null; // No errors
         }
+
 
         // =================================================================================
         // --- VIRTUAL FILE: json_generator.js ---
@@ -672,24 +740,28 @@
 
         /**
          * Parses and validates a set of rules (Standard or Holiday).
-         * @param {string} ruleContainerSelector - CSS selector for the rule container.
-         * @param {'standard'|'holiday'} ruleType - Type of rules being parsed.
-         * @param {Array<number>} allExpectedItems - Expected months or weekdays for full coverage.
-         * @param {string} itemTypeForMessage - String like "Month" or "Weekday" for error messages.
-         * @param {Array<string>} validationErrors - Array to push validation error messages into.
-         * @returns {{rules: Array<Object>, coveredItems: Set<number>}} - Parsed rules and covered items.
          */
-        function parseAndValidateRuleSet(ruleContainerSelector, ruleType, allExpectedItems, itemTypeForMessage, validationErrors) { 
+        function parseAndValidateRuleSet(ruleContainerSelector, ruleType, validationErrors, overallCoveredMonthsSet) { 
             const rulesOutput = [];
             const ruleDivs = document.querySelectorAll(ruleContainerSelector);
-            let allCoveredItemsInSet = new Set(); 
+            
             ruleDivs.forEach(ruleDiv => {
                 const ruleNum = ruleDiv.dataset.ruleNumber;
                 const contextPrefix = `${ruleType === 'standard' ? 'Standard Rule' : 'Holiday Month Rule'} #${ruleNum}`;
                 const monthCheckboxesContainer = ruleDiv.querySelector('.month-checkboxes-target > div > div.grid');
                 const selectedMonthsForRule = Array.from(monthCheckboxesContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
-                if (selectedMonthsForRule.length === 0) { validationErrors.push(`${contextPrefix} has no months selected.`); return; }
-                selectedMonthsForRule.forEach(m => allCoveredItemsInSet.add(m)); // For overall month coverage check for this rule set
+                
+                if (selectedMonthsForRule.length === 0) { 
+                    validationErrors.push(`${contextPrefix} has no months selected.`); 
+                    return; 
+                }
+
+                selectedMonthsForRule.forEach(month => {
+                    if (overallCoveredMonthsSet.has(month)) {
+                        validationErrors.push(`Conflict: Month ${MONTHS_DATA.find(m=>m.value===month)?.name} is defined in multiple ${ruleType} rules (Rule #${ruleNum} and another).`);
+                    }
+                    overallCoveredMonthsSet.add(month);
+                });
                 
                 const weekStructureForRule = [];
                 const weekdayGroupDivs = ruleDiv.querySelectorAll('.weekday-group');
@@ -697,14 +769,24 @@
                     validationErrors.push(`${contextPrefix} (Months: ${selectedMonthsForRule.join(', ')}): No Weekday Groups defined.`);
                 }
                 
-                let allCoveredWeekdaysInRule = new Set(); // For checking weekday coverage within this specific rule
+                let weekdaysCoveredInThisRule = new Set(); 
                 weekdayGroupDivs.forEach(groupDiv => {
                     const groupNum = groupDiv.dataset.groupNumber;
-                    const groupContext = `${contextPrefix}, Weekday Group (ID part: ${groupNum})`; // Made context more specific
+                    const groupContext = `${contextPrefix}, Weekday Group (ID part: ${groupNum})`;
                     const weekdayCheckboxesContainer = groupDiv.querySelector('.weekday-checkboxes-target > div > div.grid');
                     const selectedWeekdaysForGroup = Array.from(weekdayCheckboxesContainer.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
-                    if (selectedWeekdaysForGroup.length === 0) { validationErrors.push(`${groupContext}: No weekdays selected.`); return; }
-                    selectedWeekdaysForGroup.forEach(wd => allCoveredWeekdaysInRule.add(wd));
+                    
+                    if (selectedWeekdaysForGroup.length === 0) { 
+                        validationErrors.push(`${groupContext}: No weekdays selected.`); 
+                        return; 
+                    }
+                    
+                    selectedWeekdaysForGroup.forEach(wd => {
+                        if (weekdaysCoveredInThisRule.has(wd)) {
+                            validationErrors.push(`Conflict in ${contextPrefix}: Weekday ${WEEKDAYS_DATA.find(d=>d.value===wd)?.name} is in multiple Weekday Groups.`);
+                        }
+                        weekdaysCoveredInThisRule.add(wd);
+                    });
                     
                     const rateTimeranges = [];
                     const ratePeriodDivs = groupDiv.querySelectorAll('.rate-periods-container > div[id^="ratePeriod-"]');
@@ -717,20 +799,20 @@
                         const amountInput = periodDiv.querySelector('.rate-amount');
                         if (startInput && endInput && amountInput && startInput.value && endInput.value && amountInput.value !== '') {
                             rateTimeranges.push({ start: startInput.value, end: endInput.value, amount: parseFloat(parseFloat(amountInput.value).toFixed(4)) });
-                        } else if (selectedWeekdaysForGroup.length > 0) { // Only error if the group itself is active
+                        } else if (selectedWeekdaysForGroup.length > 0) { 
                              validationErrors.push(`${groupContext}: An incomplete rate period was found.`);
                         }
                     });
-                    const timeValidationError = validateTimeRanges(rateTimeranges, groupContext);
+                    const timeValidationError = validateTimeRanges(rateTimeranges, groupContext); 
                     if (timeValidationError) validationErrors.push(timeValidationError);
 
                     if (rateTimeranges.length > 0 && !timeValidationError) {
                         weekStructureForRule.push({ iso_weekday: selectedWeekdaysForGroup.sort((a, b) => a - b), day_structure: { rate_timeranges: rateTimeranges } });
                     }
                 });
-                // Check weekday coverage for this specific month rule
-                const missingWeekdaysInRule = getMissingItems(ALL_WEEKDAY_NUMBERS, Array.from(allCoveredWeekdaysInRule));
-                if (missingWeekdaysInRule.length > 0 && selectedMonthsForRule.length > 0) { // Only if rule is active
+                
+                const missingWeekdaysInRule = getMissingItems(ALL_WEEKDAY_NUMBERS, Array.from(weekdaysCoveredInThisRule));
+                if (missingWeekdaysInRule.length > 0 && selectedMonthsForRule.length > 0) { 
                     validationErrors.push(`${contextPrefix} (Months: ${selectedMonthsForRule.map(val=>MONTHS_DATA.find(m=>m.value===val)?.name).join(', ')}): Weekdays [${missingWeekdaysInRule.map(val => WEEKDAYS_DATA.find(d=>d.value===val)?.name).join(', ')}] are not covered.`);
                 }
                 
@@ -738,70 +820,77 @@
                     rulesOutput.push({ month: selectedMonthsForRule.sort((a, b) => a - b), week_structure: weekStructureForRule });
                 }
             });
-            return { rules: rulesOutput, coveredItems: allCoveredItemsInSet };
+            return rulesOutput; 
         }
 
         /**
          * Validates all configured rules and generates the final JSON.
          */
         function generateJsonWithValidation() { 
-            const jsonOutputTextarea = document.getElementById('jsonOutput'); // Get element here
-            const copyJsonBtn = document.getElementById('copyJsonBtn'); // Get element here
+            const jsonOutputTextarea = document.getElementById('jsonOutput'); 
+            const copyJsonBtn = document.getElementById('copyJsonBtn'); 
             const holidayCountryInput = document.getElementById('holidayCountry');
             const holidayStateInput = document.getElementById('holidayState');
-
 
             let validationErrors = [];
             const finalJson = {};
 
             // 1. Standard Tariff Rules
-            const standardRulesResult = parseAndValidateRuleSet('#tariffRulesContainer .tariff-rule', 'standard', ALL_MONTH_NUMBERS, 'Month', validationErrors);
-            if (standardRulesResult.rules.length > 0) {
-                finalJson.month_structure = standardRulesResult.rules;
-                const missingStandardMonths = getMissingItems(ALL_MONTH_NUMBERS, Array.from(standardRulesResult.coveredItems));
-                if (missingStandardMonths.length > 0) { validationErrors.push(`Overall Standard Tariff: Months [${missingStandardMonths.map(val=>MONTHS_DATA.find(m=>m.value===val)?.name).join(', ')}] are not covered.`); }
-            } else if (document.querySelectorAll('#tariffRulesContainer .tariff-rule').length > 0) { 
-                // Errors already pushed by parseAndValidateRuleSet if rules exist but are invalid
-            } else { 
-                validationErrors.push("No Standard Tariff Rules defined. At least one standard rule covering all months is required.");
+            let overallStandardMonthsCovered = new Set();
+            const standardRulesParsed = parseAndValidateRuleSet('#tariffRulesContainer .tariff-rule', 'standard', validationErrors, overallStandardMonthsCovered);
+            if (standardRulesParsed.length > 0) {
+                finalJson.month_structure = standardRulesParsed;
             }
+            const missingStandardMonths = getMissingItems(ALL_MONTH_NUMBERS, Array.from(overallStandardMonthsCovered));
+            if (missingStandardMonths.length > 0) { 
+                validationErrors.push(`Overall Standard Tariff: Months [${missingStandardMonths.map(val=>MONTHS_DATA.find(m=>m.value===val)?.name).join(', ')}] are not covered.`); 
+            }
+            if (document.querySelectorAll('#tariffRulesContainer .tariff-rule').length === 0) {
+                 validationErrors.push("No Standard Tariff Rules defined. At least one standard rule covering all months is required.");
+            }
+
 
             // 2. Country Holidays
             const holidayCountry = holidayCountryInput.value.trim();
             const holidayState = holidayStateInput.value.trim();
             const holidayRuleDivs = document.querySelectorAll('#holidayMonthRulesContainer .holiday-month-rule');
-
-            if (holidayRuleDivs.length > 0 || holidayCountry || holidayState) { // Process if any part of holiday section is used
-                if (!holidayCountry) validationErrors.push("Country Holidays: Country code is missing.");
+            
+            if (holidayRuleDivs.length > 0 || holidayCountry || holidayState) { 
+                if (!holidayCountry) validationErrors.push("Country Holidays: Country code is missing if holiday rules are defined or state is entered.");
                 
-                const holidayRulesResult = parseAndValidateRuleSet('#holidayMonthRulesContainer .holiday-month-rule', 'holiday', ALL_MONTH_NUMBERS, 'Month', validationErrors);
-                if (holidayRulesResult.rules.length > 0) { // Only add country_holidays if there are valid rules
+                let overallHolidayMonthsCovered = new Set();
+                const holidayRulesParsed = parseAndValidateRuleSet('#holidayMonthRulesContainer .holiday-month-rule', 'holiday', validationErrors, overallHolidayMonthsCovered);
+                
+                if (holidayRulesParsed.length > 0) { 
                     finalJson.country_holidays = { country: holidayCountry };
                     if (holidayState) { 
                         finalJson.country_holidays.state = holidayState;
                     }
-                    finalJson.country_holidays.month_structure = holidayRulesResult.rules;
+                    finalJson.country_holidays.month_structure = holidayRulesParsed;
 
-                    const missingHolidayMonths = getMissingItems(ALL_MONTH_NUMBERS, Array.from(holidayRulesResult.coveredItems));
+                    const missingHolidayMonths = getMissingItems(ALL_MONTH_NUMBERS, Array.from(overallHolidayMonthsCovered));
                     if (missingHolidayMonths.length > 0) { 
                         validationErrors.push(`Country Holidays Definition: Months [${missingHolidayMonths.map(val=>MONTHS_DATA.find(m=>m.value===val)?.name).join(', ')}] are not covered within the holiday rules.`); 
                     }
-                } else if (holidayRuleDivs.length > 0 && validationErrors.length === 0) { 
-                    // This case means rules were defined, but parseAndValidateRuleSet found issues within them,
-                    // so validationErrors would already be populated.
-                    // If no valid rules produced, but country/state was entered, it's still okay if no rules were attempted.
+                } else if (holidayRuleDivs.length > 0 && holidayCountry) { 
+                    // Errors likely already pushed by parseAndValidateRuleSet
                 }
             }
 
             // 3. Override Days
             const overrideRulesOutput = [];
             const overrideRuleDivs = document.querySelectorAll('#overrideRulesContainer .override-rule');
+            let allOverriddenDates = new Set(); 
+
             overrideRuleDivs.forEach(ruleDiv => {
                 const ruleNum = ruleDiv.dataset.ruleNumber;
                 const overrideContext = `Override Rule #${ruleNum}`;
                 const annualDates = [];
                 const dateEntryDivs = ruleDiv.querySelectorAll('.override-dates-container .grid');
-                if(dateEntryDivs.length === 0) { validationErrors.push(`${overrideContext}: No specific dates (month/day) defined.`); }
+                
+                if(dateEntryDivs.length === 0) { 
+                    validationErrors.push(`${overrideContext}: No specific dates (month/day) defined.`); 
+                }
                 
                 dateEntryDivs.forEach(dateDiv => {
                     const monthInput = dateDiv.querySelector('.override-month');
@@ -809,9 +898,19 @@
                     if (monthInput && daysInput && monthInput.value && daysInput.value) {
                         const month = parseInt(monthInput.value);
                         const days = daysInput.value.split(',').map(d => parseInt(d.trim())).filter(d => !isNaN(d) && d >= 1 && d <= 31);
-                        if (month >= 1 && month <= 12 && days.length > 0) { annualDates.push({ month, days: days.sort((a,b)=>a-b) }); } 
-                        else { validationErrors.push(`${overrideContext}: Invalid month or day entry found.`); }
-                    } else if (monthInput.value || daysInput.value) { // Only error if partially filled
+                        if (month >= 1 && month <= 12 && days.length > 0) {
+                            days.forEach(day => {
+                                const dateKey = `${month}-${day}`;
+                                if (allOverriddenDates.has(dateKey)) {
+                                    validationErrors.push(`Conflict: Date ${MONTHS_DATA.find(m=>m.value===month)?.name} ${day} is defined in multiple Override Rules or times.`);
+                                }
+                                allOverriddenDates.add(dateKey);
+                            });
+                            annualDates.push({ month, days: days.sort((a,b)=>a-b) });
+                        } else { 
+                            validationErrors.push(`${overrideContext}: Invalid month or day entry found (${monthInput.value}/${daysInput.value}).`); 
+                        }
+                    } else if (monthInput.value || daysInput.value) { 
                          validationErrors.push(`${overrideContext}: Incomplete month/day entry found.`);
                     }
                 });
@@ -827,11 +926,11 @@
                     const amountInput = periodDiv.querySelector('.rate-amount');
                     if (startInput && endInput && amountInput && startInput.value && endInput.value && amountInput.value !== '') {
                         rateTimeranges.push({ start: startInput.value, end: endInput.value, amount: parseFloat(parseFloat(amountInput.value).toFixed(4)) });
-                    } else if (annualDates.length > 0) { // Only error if dates are set and rate is incomplete
+                    } else if (annualDates.length > 0) { 
                          validationErrors.push(`${overrideContext}: An incomplete rate period was found for override dates.`);
                     }
                 });
-                const timeValidationError = validateTimeRanges(rateTimeranges, overrideContext);
+                const timeValidationError = validateTimeRanges(rateTimeranges, overrideContext); 
                 if (timeValidationError) validationErrors.push(timeValidationError);
 
                 if (annualDates.length > 0 && rateTimeranges.length > 0 && !timeValidationError) {
@@ -847,7 +946,7 @@
                 showStatusMessage(`Validation Errors Found (Fix and Regenerate):\n- ${validationErrors.join('\n- ')}`, true);
                 jsonOutputTextarea.value = ""; copyJsonBtn.disabled = true; return;
             }
-            if (Object.keys(finalJson).length === 0 || !finalJson.month_structure) { // month_structure is mandatory
+            if (Object.keys(finalJson).length === 0 || !finalJson.month_structure) { 
                  showStatusMessage("No valid tariff data to generate. Ensure at least standard tariff rules are fully configured and valid.", true);
                  jsonOutputTextarea.value = ""; copyJsonBtn.disabled = true; return;
             }
@@ -1025,7 +1124,7 @@
         }
 
         // --- Start the application ---
-        document.addEventListener('DOMContentLoaded', initApp); // Changed from init to initApp
+        document.addEventListener('DOMContentLoaded', initApp); 
     </script>
 
 </body>
