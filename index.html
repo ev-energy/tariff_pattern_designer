@@ -238,7 +238,7 @@
             const statusMessageDiv = document.getElementById('statusMessage');
             statusMessageDiv.innerHTML = message.replace(/\n/g, '<br>'); 
             statusMessageDiv.className = `mb-2 text-sm font-medium text-center p-2 rounded-md ${isError ? 'text-red-700 bg-red-100 border border-red-300' : 'text-green-700 bg-green-100 border border-green-300'}`;
-            statusMessageDiv.classList.toggle('text-left', isError); // Add text-left for errors, remove for success
+            statusMessageDiv.classList.toggle('text-left', isError); 
             if (!isError) { 
                 setTimeout(() => {
                     if (statusMessageDiv.innerHTML === message.replace(/\n/g, '<br>') && !statusMessageDiv.classList.contains('text-red-700')) {
@@ -670,7 +670,7 @@
             const minuteCoverage = new Array(1440).fill(0); // 1440 minutes in a day (24 * 60)
 
             for (const r of rateTimeranges) {
-                if (!r.start || !r.end) {
+                if (!r.start || !r.end) { // Check for missing start/end values
                     return `${contextMessage}: A rate period is missing a start or end time.`;
                 }
                 let startMinutes = timeStringToMinutes(r.start);
@@ -679,7 +679,7 @@
                 if (startMinutes % 30 !== 0) {
                     return `${contextMessage}: Start time ${r.start} must be on a :00 or :30 mark.`;
                 }
-                if (r.end !== "00:00" && (endMinutes % 30 !== 0)) {
+                if (r.end !== "00:00" && (endMinutes % 30 !== 0)) { // "00:00" end time is special
                     return `${contextMessage}: End time ${r.end} must be on a :00 or :30 mark (or be "00:00" for end of day).`;
                 }
                 
@@ -689,44 +689,40 @@
                 if (startMinutes === 0 && effectiveEndMinutes === 1440) {
                     for (let m = 0; m < 1440; m++) {
                         minuteCoverage[m]++;
-                        if (minuteCoverage[m] > 1) {
-                            return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} due to full-day period ${r.start}-${r.end} conflicting with another.`;
-                        }
                     }
-                    continue; // Move to next range if this one is a valid full day
+                    // Check for overlaps AFTER processing all ranges if this is a full-day range
+                    // This specific check for full-day overlap can be deferred to the end.
+                    // Or, if there's only ONE range and it's 00:00-00:00, it's fine.
+                    // If there are multiple, the general overlap check below will catch it.
+                    if (rateTimeranges.length === 1) continue; 
                 }
-
-                // Check for invalid duration (start >= end, unless it's a valid midnight span or the special 00:00-00:00)
-                if (startMinutes >= effectiveEndMinutes && !(startMinutes > endMinutes && effectiveEndMinutes !== 1440) ) { // start > end is only ok if it spans midnight
-                     return `${contextMessage}: Period ${r.start}-${r.end} has zero, negative, or invalid duration. End time must be after start time.`;
+                 // Check for invalid duration (start >= end, unless it's a valid midnight span or the special 00:00-00:00)
+                else if (startMinutes >= effectiveEndMinutes && !(startMinutes > endMinutes && effectiveEndMinutes !== 1440) ) { 
+                     return `${contextMessage}: Period ${r.start}-${r.end} has zero or negative duration. End time must be after start time.`;
                 }
 
 
                 if (startMinutes < effectiveEndMinutes) { // Standard range (not spanning midnight)
                     for (let m = startMinutes; m < effectiveEndMinutes; m++) {
                         minuteCoverage[m]++;
-                        if (minuteCoverage[m] > 1) {
-                            return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} due to period ${r.start}-${r.end}.`;
-                        }
                     }
                 } else { // Range spans midnight (e.g., 22:00 to 06:00)
-                    // Part 1: From start time to midnight (1440 minutes)
-                    for (let m = startMinutes; m < 1440; m++) {
+                    for (let m = startMinutes; m < 1440; m++) { // From start to midnight
                         minuteCoverage[m]++;
-                        if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} (first part of span ${r.start}-${r.end}).`;
                     }
-                    // Part 2: From midnight (0 minutes) to end time
-                    for (let m = 0; m < effectiveEndMinutes; m++) { // effectiveEndMinutes here would be the endMinutes for the next day
+                    for (let m = 0; m < effectiveEndMinutes; m++) { // From midnight to end (effectiveEndMinutes is actually endMinutes here)
                         minuteCoverage[m]++;
-                        if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')} (second part of span ${r.start}-${r.end}).`;
                     }
                 }
             }
 
-            // Check for full coverage (no gaps)
+            // Check for full coverage (no gaps) and overlaps
             for (let m = 0; m < 1440; m++) {
                 if (minuteCoverage[m] === 0) {
                     return `${contextMessage}: Gap in time coverage at ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')}. Full 24-hour coverage is required.`;
+                }
+                if (minuteCoverage[m] > 1) {
+                     return `${contextMessage}: Overlapping time periods detected around ${Math.floor(m/60).toString().padStart(2,'0')}:${(m%60).toString().padStart(2,'0')}.`;
                 }
             }
             
@@ -758,7 +754,7 @@
 
                 selectedMonthsForRule.forEach(month => {
                     if (overallCoveredMonthsSet.has(month)) {
-                        validationErrors.push(`Conflict: Month ${MONTHS_DATA.find(m=>m.value===month)?.name} is defined in multiple ${ruleType} rules (Rule #${ruleNum} and another).`);
+                        validationErrors.push(`Conflict: Month ${MONTHS_DATA.find(m=>m.value===month)?.name} (in ${ruleType} Rule #${ruleNum}) is already assigned in another ${ruleType} rule.`);
                     }
                     overallCoveredMonthsSet.add(month);
                 });
