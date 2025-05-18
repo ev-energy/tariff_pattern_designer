@@ -209,18 +209,17 @@
         };
 
         const RatePeriod = ({ period, onChange, onRemove }) => {
-            // Local state for the amount input to allow flexible typing (e.g., "0.", "0.10")
             const [displayAmount, setDisplayAmount] = useState(period.amount.toString());
 
-            // Sync local displayAmount when the period.amount prop changes from parent
             useEffect(() => {
-                // Only update if the string representations are different to avoid disrupting typing
-                // or if the parent's numeric value is different from what displayAmount would parse to.
                 const propAmountString = period.amount.toString();
-                if (propAmountString !== displayAmount && parseFloat(displayAmount) !== period.amount) {
+                // Check if the parsed displayAmount is different from period.amount OR if the string representations differ
+                // This helps avoid unnecessary updates if the user is typing "0.10" and period.amount is 0.1
+                if (parseFloat(displayAmount) !== period.amount || (displayAmount !== propAmountString && displayAmount !== parseFloat(propAmountString).toString()) ) {
                      setDisplayAmount(propAmountString);
                 }
-            }, [period.amount]); // Removed displayAmount from deps to avoid potential loops
+            }, [period.amount]);
+
 
             const handleTimeChange = (e, field) => {
                 let value = e.target.value;
@@ -240,18 +239,14 @@
             
             const handleAmountInputChange = (e) => {
                 const stringValue = e.target.value;
-                setDisplayAmount(stringValue); // Update local display string immediately
+                setDisplayAmount(stringValue); 
 
-                // Attempt to parse and call parent onChange with a number
-                // This allows the parent state (period.amount) to remain a number for calculations
                 const parsedNum = parseFloat(stringValue);
-                if (stringValue === "" || stringValue === "-") { // Handle empty or just minus
-                    onChange({ ...period, amount: 0 }); // Or a different "empty" marker if needed
+                if (stringValue === "" || stringValue === "-") { 
+                    onChange({ ...period, amount: 0 }); 
                 } else if (!isNaN(parsedNum)) {
                     onChange({ ...period, amount: parsedNum });
                 }
-                // If input is invalid (e.g. "0.1.2"), parent's amount doesn't update, displayAmount shows invalid input.
-                // Final validation will catch this.
             };
 
             return (
@@ -281,7 +276,7 @@
                         <input 
                             type="number" 
                             step="0.0001" 
-                            value={displayAmount} // Use local string state for input value
+                            value={displayAmount} 
                             onChange={handleAmountInputChange}
                             min="0" 
                             className="input-field text-xs rate-amount" 
@@ -509,12 +504,12 @@
             );
         };
 
-        const RatePreviewChart = ({ chartData }) => {
+        const RatePreviewChart = ({ chartData, selectedWeekStartForChart }) => { // Added selectedWeekStartForChart prop
             const chartRef = useRef(null);
             const chartInstanceRef = useRef(null); 
 
             useEffect(() => {
-                if (chartRef.current && chartData && typeof Chart !== 'undefined') { 
+                if (chartRef.current && chartData && typeof Chart !== 'undefined' && selectedWeekStartForChart) { 
                     if (chartInstanceRef.current) {
                         chartInstanceRef.current.destroy(); 
                     }
@@ -556,7 +551,23 @@
                             plugins: {
                                 tooltip: {
                                     callbacks: {
-                                        title: function(tooltipItems) { return tooltipItems[0].label; },
+                                        title: function(tooltipItems) {
+                                            if (!tooltipItems.length) return '';
+                                            const dataIndex = tooltipItems[0].dataIndex;
+                                            const dayOffset = Math.floor(dataIndex / 48);
+                                            const minutesIntoDay = (dataIndex % 48) * 30;
+
+                                            const baseDate = new Date(selectedWeekStartForChart + "T00:00:00"); // Ensure local timezone
+                                            const currentDate = new Date(baseDate.setDate(baseDate.getDate() + dayOffset));
+                                            
+                                            currentDate.setHours(Math.floor(minutesIntoDay / 60));
+                                            currentDate.setMinutes(minutesIntoDay % 60);
+                                            
+                                            const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' };
+                                            const formattedDate = currentDate.toLocaleDateString('en-GB', options);
+                                            const formattedTime = `${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}`;
+                                            return `${formattedDate} ${formattedTime}`;
+                                        },
                                         label: function(tooltipItem) { return `Rate: £${Number(tooltipItem.raw).toFixed(4)}`; }
                                     }
                                 }
@@ -570,7 +581,7 @@
                         chartInstanceRef.current = null;
                     }
                 };
-            }, [chartData]); 
+            }, [chartData, selectedWeekStartForChart]); 
 
             return (
                 <div className="relative h-96"> 
@@ -729,7 +740,7 @@
                     if (startMinutes === 0 && effectiveEndMinutes === MINUTES_IN_DAY) {
                         for (let m = 0; m < MINUTES_IN_DAY; m++) minuteCoverage[m]++;
                         if (rateTimeranges.length === 1) continue; 
-                    } else if (startMinutes >= effectiveEndMinutes && !(startMinutes > endMinutes && effectiveEndMinutes !== MINUTES_IN_DAY) ) { // Corrected this line
+                    } else if (startMinutes >= effectiveEndMinutes && !(startMinutes > endMinutes && effectiveEndMinutes !== MINUTES_IN_DAY) ) {
                          return `${contextMessage}: Period ${r.start}-${r.end} has zero or negative duration.`;
                     }
             
@@ -737,7 +748,7 @@
                         for (let m = startMinutes; m < effectiveEndMinutes; m++) minuteCoverage[m]++;
                     } else { 
                         for (let m = startMinutes; m < MINUTES_IN_DAY; m++) minuteCoverage[m]++;
-                        for (let m = 0; m < effectiveEndMinutes; m++) minuteCoverage[m]++; // effectiveEndMinutes is endMinutes for next day part
+                        for (let m = 0; m < effectiveEndMinutes; m++) minuteCoverage[m]++; 
                     }
                 }
                 for (let m = 0; m < MINUTES_IN_DAY; m++) {
@@ -1066,7 +1077,7 @@
                                 className="input-field w-full md:w-1/3"
                             />
                         </div>
-                        <RatePreviewChart chartData={chartData} />
+                        <RatePreviewChart chartData={chartData} selectedWeekStartForChart={selectedWeekStart} />
                     </section>
 
 
