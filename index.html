@@ -123,10 +123,10 @@
         }
         .chart-warning-icon {
             display: inline-block;
-            margin-left: 0.5rem;
+            margin-left: 0.75rem; /* Increased margin slightly */
             color: #f59e0b; /* amber-500 */
             cursor: help;
-            position: relative;
+            position: relative; /* For tooltip positioning */
         }
         .chart-warning-icon .tooltip-text {
             visibility: hidden;
@@ -137,7 +137,7 @@
             border-radius: 0.375rem; /* rounded-md */
             padding: 0.5rem 0.75rem; /* py-2 px-3 */
             position: absolute;
-            z-index: 1;
+            z-index: 20; /* Ensure tooltip is above other sticky elements if any */
             bottom: 125%; /* Position above the icon */
             left: 50%;
             margin-left: -150px; /* Use half of the width to center */
@@ -146,6 +146,7 @@
             font-size: 0.75rem; /* text-xs */
             line-height: 1.25; /* leading-tight */
             white-space: pre-line; /* To respect newlines in the error message */
+            pointer-events: none; /* Allow clicks to pass through tooltip */
         }
         .chart-warning-icon:hover .tooltip-text {
             visibility: visible;
@@ -585,8 +586,9 @@
                             },
                             plugins: {
                                 tooltip: {
-                                    yAlign: 'bottom', // Position tooltip below the cursor
-                                    caretPadding: 10, // Add some space between cursor and tooltip
+                                    yAlign: 'top',    
+                                    xAlign: 'left',   
+                                    caretPadding: 15, 
                                     callbacks: {
                                         title: function(tooltipItems) {
                                             if (!tooltipItems.length) return '';
@@ -1106,24 +1108,21 @@
 
                     {/* Rate Preview Chart Section */}
                     <section className="section-container sticky-chart-section"> 
-                        <h2 className="section-header flex items-center">
-                            Rate Preview Chart
-                            {statusMessage.isError && statusMessage.text && (
-                                <span className="chart-warning-icon" title={statusMessage.text.replace(/- /g, '\n- ').replace(/<b>|<\/b>/g, '')}>
-                                    ⚠️
-                                    <span className="tooltip-text" dangerouslySetInnerHTML={{ __html: statusMessage.text.replace(/\n- /g, '<br/>- ') }} />
-                                </span>
-                            )}
-                        </h2>
-                        <div className="mb-4">
-                            <label htmlFor="weekPicker" className="input-label">Select Week Start Date:</label>
+                        <div className="flex items-center mb-4">
+                            <label htmlFor="weekPicker" className="input-label mr-2 mb-0">Select Week to Preview:</label>
                             <input 
                                 type="date" 
                                 id="weekPicker"
                                 value={selectedWeekStart}
                                 onChange={(e) => setSelectedWeekStart(e.target.value)}
-                                className="input-field w-full md:w-1/3"
+                                className="input-field w-auto md:w-1/3"
                             />
+                             {statusMessage.isError && statusMessage.text && (
+                                <span className="chart-warning-icon">
+                                    ⚠️
+                                    <span className="tooltip-text" dangerouslySetInnerHTML={{ __html: statusMessage.text.replace(/\n- /g, '<br/>- ') }} />
+                                </span>
+                            )}
                         </div>
                         <RatePreviewChart chartData={chartData} selectedWeekStartForChart={selectedWeekStart} />
                     </section>
