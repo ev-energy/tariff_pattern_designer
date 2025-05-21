@@ -114,6 +114,43 @@
             border-radius: 0.375rem; /* rounded-md */
             border: 1px solid #c7d2fe; /* indigo-200 */
         }
+        /* Style for the sticky chart section */
+        .sticky-chart-section {
+            position: -webkit-sticky; /* Safari */
+            position: sticky;
+            top: 1rem; /* Adjust this value based on your header or desired offset */
+            z-index: 10; /* Ensure it stays on top */
+        }
+        .chart-warning-icon {
+            display: inline-block;
+            margin-left: 0.5rem;
+            color: #f59e0b; /* amber-500 */
+            cursor: help;
+            position: relative;
+        }
+        .chart-warning-icon .tooltip-text {
+            visibility: hidden;
+            width: 300px;
+            background-color: #374151; /* gray-700 */
+            color: #fff;
+            text-align: left;
+            border-radius: 0.375rem; /* rounded-md */
+            padding: 0.5rem 0.75rem; /* py-2 px-3 */
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Position above the icon */
+            left: 50%;
+            margin-left: -150px; /* Use half of the width to center */
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.75rem; /* text-xs */
+            line-height: 1.25; /* leading-tight */
+            white-space: pre-line; /* To respect newlines in the error message */
+        }
+        .chart-warning-icon:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 p-4 md:p-8">
@@ -213,8 +250,6 @@
 
             useEffect(() => {
                 const propAmountString = period.amount.toString();
-                // Check if the parsed displayAmount is different from period.amount OR if the string representations differ
-                // This helps avoid unnecessary updates if the user is typing "0.10" and period.amount is 0.1
                 if (parseFloat(displayAmount) !== period.amount || (displayAmount !== propAmountString && displayAmount !== parseFloat(propAmountString).toString()) ) {
                      setDisplayAmount(propAmountString);
                 }
@@ -504,7 +539,7 @@
             );
         };
 
-        const RatePreviewChart = ({ chartData, selectedWeekStartForChart }) => { // Added selectedWeekStartForChart prop
+        const RatePreviewChart = ({ chartData, selectedWeekStartForChart }) => { 
             const chartRef = useRef(null);
             const chartInstanceRef = useRef(null); 
 
@@ -550,21 +585,26 @@
                             },
                             plugins: {
                                 tooltip: {
+                                    yAlign: 'bottom', // Position tooltip below the cursor
+                                    caretPadding: 10, // Add some space between cursor and tooltip
                                     callbacks: {
                                         title: function(tooltipItems) {
                                             if (!tooltipItems.length) return '';
                                             const dataIndex = tooltipItems[0].dataIndex;
-                                            const dayOffset = Math.floor(dataIndex / 48);
+                                            const dayOffset = Math.floor(dataIndex / 48); 
                                             const minutesIntoDay = (dataIndex % 48) * 30;
+                                            
+                                            const [year, month, day] = selectedWeekStartForChart.split('-').map(Number);
+                                            const baseDate = new Date(year, month - 1, day); 
 
-                                            const baseDate = new Date(selectedWeekStartForChart + "T00:00:00"); // Ensure local timezone
-                                            const currentDate = new Date(baseDate.setDate(baseDate.getDate() + dayOffset));
+                                            const currentDate = new Date(baseDate);
+                                            currentDate.setDate(baseDate.getDate() + dayOffset);
                                             
                                             currentDate.setHours(Math.floor(minutesIntoDay / 60));
                                             currentDate.setMinutes(minutesIntoDay % 60);
                                             
                                             const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' };
-                                            const formattedDate = currentDate.toLocaleDateString('en-GB', options);
+                                            const formattedDate = currentDate.toLocaleDateString('en-GB', options); 
                                             const formattedTime = `${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}`;
                                             return `${formattedDate} ${formattedTime}`;
                                         },
@@ -584,7 +624,7 @@
             }, [chartData, selectedWeekStartForChart]); 
 
             return (
-                <div className="relative h-96"> 
+                <div className="relative h-[25vh]"> 
                     <canvas ref={chartRef}></canvas>
                 </div>
             );
@@ -1065,8 +1105,16 @@
                     </section>
 
                     {/* Rate Preview Chart Section */}
-                    <section className="section-container">
-                        <h2 className="section-header">Rate Preview Chart</h2>
+                    <section className="section-container sticky-chart-section"> 
+                        <h2 className="section-header flex items-center">
+                            Rate Preview Chart
+                            {statusMessage.isError && statusMessage.text && (
+                                <span className="chart-warning-icon" title={statusMessage.text.replace(/- /g, '\n- ').replace(/<b>|<\/b>/g, '')}>
+                                    ⚠️
+                                    <span className="tooltip-text" dangerouslySetInnerHTML={{ __html: statusMessage.text.replace(/\n- /g, '<br/>- ') }} />
+                                </span>
+                            )}
+                        </h2>
                         <div className="mb-4">
                             <label htmlFor="weekPicker" className="input-label">Select Week Start Date:</label>
                             <input 
