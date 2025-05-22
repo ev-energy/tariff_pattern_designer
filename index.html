@@ -555,7 +555,7 @@
                         data: {
                             labels: chartData.labels,
                             datasets: [{
-                                label: 'Rate (£)',
+                                // label: 'Rate (£)', // Legend removed
                                 data: chartData.data,
                                 borderColor: 'rgb(75, 192, 192)',
                                 backgroundColor: 'rgba(75, 192, 192, 0.5)',
@@ -575,7 +575,7 @@
                             },
                             scales: {
                                 x: {
-                                    title: { display: true, text: 'Time of Week' },
+                                    title: { display: false }, // X-axis title removed
                                     ticks: { autoSkip: true, maxTicksLimit: 24 }
                                 },
                                 y: {
@@ -585,6 +585,9 @@
                                 }
                             },
                             plugins: {
+                                legend: {
+                                    display: false // Legend removed
+                                },
                                 tooltip: {
                                     yAlign: 'top',    
                                     xAlign: 'left',   
@@ -1108,7 +1111,7 @@
 
                     {/* Rate Preview Chart Section */}
                     <section className="section-container sticky-chart-section"> 
-                        <div className="flex items-center mb-4">
+                        <div className="flex items-center mb-2"> {/* Reduced mb-4 to mb-2 */}
                             <label htmlFor="weekPicker" className="input-label mr-2 mb-0">Select Week to Preview:</label>
                             <input 
                                 type="date" 
