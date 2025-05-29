@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comprehensive Tariff Pattern Designer (React)</title>
+    <title>Schema Designer (React)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
         // Import the date-holidays library using its ESM endpoint
@@ -123,30 +123,30 @@
         }
         .chart-warning-icon {
             display: inline-block;
-            margin-left: 0.75rem; /* Increased margin slightly */
+            margin-left: 0.75rem; 
             color: #f59e0b; /* amber-500 */
             cursor: help;
-            position: relative; /* For tooltip positioning */
+            position: relative; 
         }
         .chart-warning-icon .tooltip-text {
             visibility: hidden;
             width: 300px;
-            background-color: #374151; /* gray-700 */
+            background-color: #374151; 
             color: #fff;
             text-align: left;
-            border-radius: 0.375rem; /* rounded-md */
-            padding: 0.5rem 0.75rem; /* py-2 px-3 */
+            border-radius: 0.375rem; 
+            padding: 0.5rem 0.75rem; 
             position: absolute;
-            z-index: 20; /* Ensure tooltip is above other sticky elements if any */
-            bottom: 125%; /* Position above the icon */
+            z-index: 20; 
+            bottom: 125%; 
             left: 50%;
-            margin-left: -150px; /* Use half of the width to center */
+            margin-left: -150px; 
             opacity: 0;
             transition: opacity 0.3s;
-            font-size: 0.75rem; /* text-xs */
-            line-height: 1.25; /* leading-tight */
-            white-space: pre-line; /* To respect newlines in the error message */
-            pointer-events: none; /* Allow clicks to pass through tooltip */
+            font-size: 0.75rem; 
+            line-height: 1.25; 
+            white-space: pre-line; 
+            pointer-events: none; 
         }
         .chart-warning-icon:hover .tooltip-text {
             visibility: visible;
@@ -286,7 +286,7 @@
             };
 
             return (
-                <div className="p-3 border border-gray-200 rounded-md grid grid-cols-1 sm:grid-cols-7 gap-2 items-center bg-white shadow-sm text-sm">
+                <div className="p-3 border border-gray-200 rounded-md grid grid-cols-1 sm:grid-cols-8 gap-2 items-center bg-white shadow-sm text-sm">
                     <div className="sm:col-span-2 grid grid-cols-1 gap-1">
                         <label className="block text-xs font-medium text-gray-700">Start:</label>
                         <input 
@@ -318,6 +318,21 @@
                             className="input-field text-xs rate-amount" 
                         />
                     </div>
+                    <div className="sm:col-span-1 flex items-center justify-start sm:justify-center pt-2 sm:pt-0 group relative">
+                        <input
+                            type="checkbox"
+                            id={`isOffpeak-${period.id}`}
+                            checked={!!period.isOffpeak} // Ensure it's a boolean for the checkbox
+                            onChange={(e) => onChange({ ...period, isOffpeak: e.target.checked })}
+                            className="mr-1.5 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        />
+                        <label htmlFor={`isOffpeak-${period.id}`} className="text-xs text-gray-700 cursor-pointer select-none">
+                            Off-peak
+                        </label>
+                        <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-max max-w-xs px-2 py-1 bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-normal">
+                            Mark this period as off-peak. This designation can be used for analytical purposes, such as calculating total off-peak consumption.
+                        </span>
+                    </div>
                     <button 
                         onClick={onRemove}
                         className="sm:col-span-1 remove-btn text-xs h-8 self-center mt-2 sm:mt-0"
@@ -334,7 +349,7 @@
             };
 
             const addRatePeriod = () => {
-                const newPeriod = { id: generateId(), start: "00:00", end: "00:00", amount: 0.00 };
+                const newPeriod = { id: generateId(), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false };
                 onUpdateGroup({ ...group, ratePeriods: [...group.ratePeriods, newPeriod] });
             };
 
@@ -395,7 +410,7 @@
             };
 
             const addWeekdayGroup = () => {
-                const newGroup = { id: generateId(), weekdays: [], ratePeriods: [{ id: generateId(), start: "00:00", end: "00:00", amount: 0.00 }] };
+                const newGroup = { id: generateId(), weekdays: [], ratePeriods: [{ id: generateId(), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }] };
                 onUpdateRule({ ...rule, weekdayGroups: [...rule.weekdayGroups, newGroup] });
             };
 
@@ -488,7 +503,7 @@
             };
 
             const addRatePeriod = () => {
-                const newPeriod = { id: generateId(), start: "00:00", end: "00:00", amount: 0.00 };
+                const newPeriod = { id: generateId(), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false };
                 onUpdateRule({ ...rule, ratePeriods: [...rule.ratePeriods, newPeriod] });
             };
             const updateRatePeriod = (updatedPeriod) => {
@@ -555,7 +570,7 @@
                         data: {
                             labels: chartData.labels,
                             datasets: [{
-                                // label: 'Rate (£)', // Legend removed
+                                // label: 'Value', // Legend removed
                                 data: chartData.data,
                                 borderColor: 'rgb(75, 192, 192)',
                                 backgroundColor: 'rgba(75, 192, 192, 0.5)',
@@ -575,18 +590,18 @@
                             },
                             scales: {
                                 x: {
-                                    title: { display: false }, // X-axis title removed
+                                    title: { display: false }, 
                                     ticks: { autoSkip: true, maxTicksLimit: 24 }
                                 },
                                 y: {
-                                    title: { display: true, text: 'Rate Amount (£)' },
+                                    title: { display: true, text: 'Value' }, // Changed Y-axis title
                                     beginAtZero: true,
-                                     ticks: { callback: function(value) { return '£' + value.toFixed(2); } }
+                                     ticks: { callback: function(value) { return value.toFixed(2); } } // Removed currency
                                 }
                             },
                             plugins: {
                                 legend: {
-                                    display: false // Legend removed
+                                    display: false 
                                 },
                                 tooltip: {
                                     yAlign: 'top',    
@@ -613,7 +628,7 @@
                                             const formattedTime = `${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}`;
                                             return `${formattedDate} ${formattedTime}`;
                                         },
-                                        label: function(tooltipItem) { return `Rate: £${Number(tooltipItem.raw).toFixed(4)}`; }
+                                        label: function(tooltipItem) { return `Value: ${Number(tooltipItem.raw).toFixed(4)}`; } // Removed currency
                                     }
                                 }
                             }
@@ -684,7 +699,7 @@
                     id: getNextId('standardRule'), 
                     number: counters.standardRule + 1, 
                     months: [], 
-                    weekdayGroups: [{ id: getNextId('weekdayGroup'), weekdays: [], ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00 }] }]
+                    weekdayGroups: [{ id: getNextId('weekdayGroup'), weekdays: [], ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }] }]
                 };
                 setStandardRules(prev => [...prev, newRule]);
             };
@@ -700,7 +715,7 @@
                     id: getNextId('holidayRule'), 
                     number: counters.holidayRule + 1, 
                     months: [], 
-                    weekdayGroups: [{ id: getNextId('weekdayGroup'), weekdays: [], ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00 }] }]
+                    weekdayGroups: [{ id: getNextId('weekdayGroup'), weekdays: [], ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }] }]
                 };
                 setHolidayMonthRules(prev => [...prev, newRule]);
             };
@@ -716,7 +731,7 @@
                     id: getNextId('overrideRule'),
                     number: counters.overrideRule + 1,
                     dates: [{ id: getNextId('dateEntry'), month: '', days: [] }],
-                    ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00 }]
+                    ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }]
                 };
                 setOverrideRules(prev => [...prev, newRule]);
             };
@@ -841,7 +856,15 @@
                         if (group.ratePeriods.length > 0 && !timeValidationError) {
                             weekStructureForRule.push({ 
                                 iso_weekday: [...group.weekdays].sort((a,b)=>a-b), 
-                                day_structure: { rate_timeranges: group.ratePeriods.map(({id, ...rest}) => rest) } 
+                                day_structure: { 
+                                    rate_timeranges: group.ratePeriods.map(rp => {
+                                        const outputRp = { start: rp.start, end: rp.end, amount: rp.amount };
+                                        if (rp.isOffpeak) {
+                                            outputRp.label = "OFF_PEAK"; 
+                                        }
+                                        return outputRp;
+                                    })
+                                } 
                             });
                         }
                     });
@@ -905,7 +928,18 @@
                     const timeValidationError = validateTimeRangesForReact(rule.ratePeriods, overrideContext);
                     if (timeValidationError) validationErrors.push(timeValidationError);
                     if (annualDates.length > 0 && rule.ratePeriods.length > 0 && !timeValidationError) {
-                        parsedOverrideRules.push({ annual_date: annualDates, day_structure: { rate_timeranges: rule.ratePeriods.map(({id, ...rest}) => rest) } });
+                        parsedOverrideRules.push({ 
+                            annual_date: annualDates, 
+                            day_structure: { 
+                                rate_timeranges: rule.ratePeriods.map(rp => {
+                                    const outputRp = { start: rp.start, end: rp.end, amount: rp.amount };
+                                    if (rp.isOffpeak) {
+                                        outputRp.label = "OFF_PEAK"; 
+                                    }
+                                    return outputRp;
+                                })
+                            } 
+                        });
                     }
                 });
                 if (parsedOverrideRules.length > 0) finalJson.override = parsedOverrideRules;
@@ -929,7 +963,7 @@
                 clearAllConfigurations();
                 setStandardRules([{ 
                     id: 'std-flat-1', number: 1, months: [...ALL_MONTH_NUMBERS], 
-                    weekdayGroups: [{ id: 'std-flat-wg-1', weekdays: [...ALL_WEEKDAY_NUMBERS], ratePeriods: [{id: 'std-flat-rp-1', start: "00:00", end: "00:00", amount: 0.15 }] }]
+                    weekdayGroups: [{ id: 'std-flat-wg-1', weekdays: [...ALL_WEEKDAY_NUMBERS], ratePeriods: [{id: 'std-flat-rp-1', start: "00:00", end: "00:00", amount: 0.15, isOffpeak: false }] }]
                 }]);
                 setStatusMessage({ text: "Flat Rate example loaded.", isError: false });
             }, [clearAllConfigurations]);
@@ -941,8 +975,8 @@
                     weekdayGroups: [{
                         id: 'std-dual-wg-1', weekdays: [...ALL_WEEKDAY_NUMBERS],
                         ratePeriods: [
-                            { id: 'std-dual-rp-1', start: "00:00", end: "07:00", amount: 0.10 },
-                            { id: 'std-dual-rp-2', start: "07:00", end: "00:00", amount: 0.25 }
+                            { id: 'std-dual-rp-1', start: "00:00", end: "07:00", amount: 0.10, isOffpeak: true },
+                            { id: 'std-dual-rp-2', start: "07:00", end: "00:00", amount: 0.25, isOffpeak: false }
                         ]
                     }]
                 }]);
@@ -957,13 +991,13 @@
                         { 
                             id: 'std-dualwknd-wg-1', weekdays: [1,2,3,4,5], 
                             ratePeriods: [
-                                { id: 'std-dualwknd-rp-1', start: "00:00", end: "07:00", amount: 0.10 },
-                                { id: 'std-dualwknd-rp-2', start: "07:00", end: "00:00", amount: 0.25 }
+                                { id: 'std-dualwknd-rp-1', start: "00:00", end: "07:00", amount: 0.10, isOffpeak: true },
+                                { id: 'std-dualwknd-rp-2', start: "07:00", end: "00:00", amount: 0.25, isOffpeak: false }
                             ]
                         },
                         {
                             id: 'std-dualwknd-wg-2', weekdays: [6,7],
-                            ratePeriods: [{ id: 'std-dualwknd-rp-3', start: "00:00", end: "00:00", amount: 0.10 }]
+                            ratePeriods: [{ id: 'std-dualwknd-rp-3', start: "00:00", end: "00:00", amount: 0.10, isOffpeak: true }]
                         }
                     ]
                 }]);
@@ -976,25 +1010,25 @@
                     { 
                         id: 'std-comp-1', number: 1, months: [1, 2, 3, 10, 11, 12], 
                         weekdayGroups: [
-                            { id: 'std-comp-wg-1', weekdays: [1,2,3,4,5], ratePeriods: [{ id: 'std-comp-rp-1', start: "00:00", end: "12:00", amount: 0.10 }, { id: 'std-comp-rp-2', start: "12:00", end: "00:00", amount: 0.20 }] },
-                            { id: 'std-comp-wg-2', weekdays: [6,7], ratePeriods: [{ id: 'std-comp-rp-3', start: "00:00", end: "00:00", amount: 0.10 }] }
+                            { id: 'std-comp-wg-1', weekdays: [1,2,3,4,5], ratePeriods: [{ id: 'std-comp-rp-1', start: "00:00", end: "12:00", amount: 0.10, isOffpeak: true }, { id: 'std-comp-rp-2', start: "12:00", end: "00:00", amount: 0.20, isOffpeak: false }] },
+                            { id: 'std-comp-wg-2', weekdays: [6,7], ratePeriods: [{ id: 'std-comp-rp-3', start: "00:00", end: "00:00", amount: 0.10, isOffpeak: true }] }
                         ]
                     },
                     {
                         id: 'std-comp-2', number: 2, months: [4,5,6,7,8,9],
-                        weekdayGroups: [{ id: 'std-comp-wg-3', weekdays: [...ALL_WEEKDAY_NUMBERS], ratePeriods: [{ id: 'std-comp-rp-4', start: "00:00", end: "00:00", amount: 0.10 }]}]
+                        weekdayGroups: [{ id: 'std-comp-wg-3', weekdays: [...ALL_WEEKDAY_NUMBERS], ratePeriods: [{ id: 'std-comp-rp-4', start: "00:00", end: "00:00", amount: 0.10, isOffpeak: true }]}]
                     }
                 ]);
                 setHolidayCountry("AU");
                 setHolidayState("ACT");
                 setHolidayMonthRules([
-                    { id: 'hol-comp-1', number: 1, months: [1], weekdayGroups: [{id: 'hol-comp-wg-1', weekdays: [...ALL_WEEKDAY_NUMBERS], ratePeriods: [{id: 'hol-comp-rp-1', start:"00:00", end:"00:00", amount: 0.01}] }]},
-                    { id: 'hol-comp-2', number: 2, months: [2,3,4,5,6,7,8,9,10,11,12], weekdayGroups: [{id: 'hol-comp-wg-2', weekdays: [...ALL_WEEKDAY_NUMBERS], ratePeriods: [{id: 'hol-comp-rp-2', start:"00:00", end:"00:00", amount: 0.02}] }]}
+                    { id: 'hol-comp-1', number: 1, months: [1], weekdayGroups: [{id: 'hol-comp-wg-1', weekdays: [...ALL_WEEKDAY_NUMBERS], ratePeriods: [{id: 'hol-comp-rp-1', start:"00:00", end:"00:00", amount: 0.01, isOffpeak: true}] }]},
+                    { id: 'hol-comp-2', number: 2, months: [2,3,4,5,6,7,8,9,10,11,12], weekdayGroups: [{id: 'hol-comp-wg-2', weekdays: [...ALL_WEEKDAY_NUMBERS], ratePeriods: [{id: 'hol-comp-rp-2', start:"00:00", end:"00:00", amount: 0.02, isOffpeak: true}] }]}
                 ]);
                 setOverrideRules([{
                     id: 'ovr-comp-1', number: 1,
                     dates: [ {id: 'ovr-dt-1', month: 12, days: [25,31]}, {id: 'ovr-dt-2', month: 2, days: [29]} ],
-                    ratePeriods: [{id: 'ovr-rp-1', start: "00:00", end: "00:00", amount: 0.10}]
+                    ratePeriods: [{id: 'ovr-rp-1', start: "00:00", end: "00:00", amount: 0.10, isOffpeak: false}]
                 }]);
                 setStatusMessage({ text: "Fully Complicated example loaded.", isError: false });
             }, [clearAllConfigurations]);
@@ -1094,7 +1128,7 @@
             return (
                 <div className="max-w-6xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-2xl">
                     <header className="mb-10 text-center">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Comprehensive Tariff Designer</h1>
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Schema Designer</h1> {/* Title Changed */}
                         <p className="text-gray-600 mt-3 text-lg">Define standard rates, country-specific holidays, and date overrides with full validation.</p>
                     </header>
 
@@ -1111,7 +1145,7 @@
 
                     {/* Rate Preview Chart Section */}
                     <section className="section-container sticky-chart-section !py-2 px-6"> {/* Reduced vertical padding */}
-                        <div className="flex items-center mb-1"> {/* Reduced mb-2 to mb-1 */}
+                        <div className="flex items-center mb-1"> 
                             <label htmlFor="weekPicker" className="input-label mr-2 mb-0">Select Week to Preview:</label>
                             <input 
                                 type="date" 
@@ -1235,7 +1269,7 @@
                     </section>
 
                     <footer className="text-center text-sm text-gray-500 mt-12">
-                        <p>&copy; <span id="currentYearReact">{new Date().getFullYear()}</span> Tariff Designer Interface. Internal Use Only.</p>
+                        <p>&copy; <span id="currentYearReact">{new Date().getFullYear()}</span> Schema Designer Interface. Internal Use Only.</p> {/* Title Changed */}
                     </footer>
                 </div>
             );
