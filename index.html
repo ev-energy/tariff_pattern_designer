@@ -9,7 +9,7 @@
         // Import the date-holidays library using its ESM endpoint
         // and assign the default export (the Holidays class) to the global window object.
         import HolidaysESM from 'https://cdn.jsdelivr.net/npm/date-holidays@3.24.3/+esm';
-        window.Holidays = HolidaysESM; 
+        window.Holidays = HolidaysESM;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -21,32 +21,32 @@
             font-family: 'Inter', sans-serif;
         }
         /* Custom scrollbar styling */
-        #jsonOutputReact::-webkit-scrollbar, 
-        .tariff-rules-container::-webkit-scrollbar, 
+        #jsonOutputReact::-webkit-scrollbar,
+        .tariff-rules-container::-webkit-scrollbar,
         .weekday-groups-container::-webkit-scrollbar,
         .holiday-month-rules-container::-webkit-scrollbar,
         .override-rules-container::-webkit-scrollbar,
         #fetchedHolidaysList::-webkit-scrollbar {
             width: 8px; height: 8px;
         }
-        #jsonOutputReact::-webkit-scrollbar-track, 
-        .tariff-rules-container::-webkit-scrollbar-track, 
+        #jsonOutputReact::-webkit-scrollbar-track,
+        .tariff-rules-container::-webkit-scrollbar-track,
         .weekday-groups-container::-webkit-scrollbar-track,
         .holiday-month-rules-container::-webkit-scrollbar-track,
         .override-rules-container::-webkit-scrollbar-track,
         #fetchedHolidaysList::-webkit-scrollbar-track {
             background: #f1f1f1; border-radius: 10px;
         }
-        #jsonOutputReact::-webkit-scrollbar-thumb, 
-        .tariff-rules-container::-webkit-scrollbar-thumb, 
+        #jsonOutputReact::-webkit-scrollbar-thumb,
+        .tariff-rules-container::-webkit-scrollbar-thumb,
         .weekday-groups-container::-webkit-scrollbar-thumb,
         .holiday-month-rules-container::-webkit-scrollbar-thumb,
         .override-rules-container::-webkit-scrollbar-thumb,
         #fetchedHolidaysList::-webkit-scrollbar-thumb {
             background: #888; border-radius: 10px;
         }
-        #jsonOutputReact::-webkit-scrollbar-thumb:hover, 
-        .tariff-rules-container::-webkit-scrollbar-thumb:hover, 
+        #jsonOutputReact::-webkit-scrollbar-thumb:hover,
+        .tariff-rules-container::-webkit-scrollbar-thumb:hover,
         .weekday-groups-container::-webkit-scrollbar-thumb:hover,
         .holiday-month-rules-container::-webkit-scrollbar-thumb:hover,
         .override-rules-container::-webkit-scrollbar-thumb:hover,
@@ -58,25 +58,25 @@
         button:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .section-container {
-            border: 1px solid #d1d5db; border-radius: 0.75rem; padding: 1.5rem; 
-            margin-bottom: 2rem; background-color: #ffffff; 
+            border: 1px solid #d1d5db; border-radius: 0.75rem; padding: 1.5rem;
+            margin-bottom: 2rem; background-color: #ffffff;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
         }
         .section-header {
-            font-size: 1.5rem; font-weight: 700; color: #1d4ed8; 
+            font-size: 1.5rem; font-weight: 700; color: #1d4ed8;
             margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #93c5fd;
         }
-        
+
         .tariff-rule, .weekday-group, .holiday-month-rule, .override-rule {
-            border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; 
+            border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem;
             margin-bottom: 1.5rem; background-color: #f9fafb;
         }
         .subsection-title {
-            font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; 
+            font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;
             color: #374151; border-bottom: 1px solid #d1d5db; padding-bottom: 0.5rem;
         }
         .remove-btn {
-             background-color: #ef4444; color: white; font-weight: 600; 
+             background-color: #ef4444; color: white; font-weight: 600;
              padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem;
         }
         .remove-btn:hover { background-color: #dc2626; }
@@ -85,11 +85,11 @@
             padding: 0.5rem 1rem; border-radius: 0.5rem;
         }
         .add-btn:hover { background-color: #16a34a; }
-        
-        #statusMessageReact { min-height: 2.5rem; display: flex; align-items: center; justify-content: center; } 
+
+        #statusMessageReact { min-height: 2.5rem; display: flex; align-items: center; justify-content: center; }
         .input-field {
-            margin-top: 0.25rem; display: block; width: 100%; border-radius: 0.375rem; 
-            border-color: #d1d5db; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); 
+            margin-top: 0.25rem; display: block; width: 100%; border-radius: 0.375rem;
+            border-color: #d1d5db; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
             padding: 0.5rem 0.75rem; font-size: 0.875rem;
         }
         .input-label { display: block; font-size: 0.875rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem;}
@@ -123,30 +123,30 @@
         }
         .chart-warning-icon {
             display: inline-block;
-            margin-left: 0.75rem; 
+            margin-left: 0.75rem;
             color: #f59e0b; /* amber-500 */
             cursor: help;
-            position: relative; 
+            position: relative;
         }
         .chart-warning-icon .tooltip-text {
             visibility: hidden;
             width: 300px;
-            background-color: #374151; 
+            background-color: #374151;
             color: #fff;
             text-align: left;
-            border-radius: 0.375rem; 
-            padding: 0.5rem 0.75rem; 
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
             position: absolute;
-            z-index: 20; 
-            bottom: 125%; 
+            z-index: 20;
+            bottom: 125%;
             left: 50%;
-            margin-left: -150px; 
+            margin-left: -150px;
             opacity: 0;
             transition: opacity 0.3s;
-            font-size: 0.75rem; 
-            line-height: 1.25; 
-            white-space: pre-line; 
-            pointer-events: none; 
+            font-size: 0.75rem;
+            line-height: 1.25;
+            white-space: pre-line;
+            pointer-events: none;
         }
         .chart-warning-icon:hover .tooltip-text {
             visibility: visible;
@@ -161,16 +161,16 @@
         const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
         // --- Constants ---
-        const MONTHS_DATA = [ 
-            { name: "January", value: 1 }, { name: "February", value: 2 }, { name: "March", value: 3 }, 
-            { name: "April", value: 4 }, { name: "May", value: 5 }, { name: "June", value: 6 }, 
-            { name: "July", value: 7 }, { name: "August", value: 8 }, { name: "September", value: 9 }, 
+        const MONTHS_DATA = [
+            { name: "January", value: 1 }, { name: "February", value: 2 }, { name: "March", value: 3 },
+            { name: "April", value: 4 }, { name: "May", value: 5 }, { name: "June", value: 6 },
+            { name: "July", value: 7 }, { name: "August", value: 8 }, { name: "September", value: 9 },
             { name: "October", value: 10 }, { name: "November", value: 11 }, { name: "December", value: 12 }
         ];
-        const WEEKDAYS_DATA = [ 
-            { name: "Monday", value: 1 }, { name: "Tuesday", value: 2 }, { name: "Wednesday", value: 3 }, 
-            { name: "Thursday", value: 4 }, { name: "Friday", value: 5 }, { name: "Saturday", value: 6 }, 
-            { name: "Sunday", value: 7 } 
+        const WEEKDAYS_DATA = [
+            { name: "Monday", value: 1 }, { name: "Tuesday", value: 2 }, { name: "Wednesday", value: 3 },
+            { name: "Thursday", value: 4 }, { name: "Friday", value: 5 }, { name: "Saturday", value: 6 },
+            { name: "Sunday", value: 7 }
         ];
         const ALL_MONTH_NUMBERS = MONTHS_DATA.map(m => m.value);
         const ALL_WEEKDAY_NUMBERS = WEEKDAYS_DATA.map(wd => wd.value);
@@ -194,7 +194,7 @@
         };
 
         const formatTimeForDisplay = (minutesTotal) => {
-            const hours = Math.floor(minutesTotal / 60) % 24; 
+            const hours = Math.floor(minutesTotal / 60) % 24;
             const minutes = minutesTotal % 60;
             return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
         };
@@ -223,7 +223,7 @@
                             type="checkbox"
                             className="mr-2 h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             checked={areAllSelected}
-                            ref={el => el && (el.indeterminate = areSomeSelected)} 
+                            ref={el => el && (el.indeterminate = areSomeSelected)}
                             onChange={handleSelectAll}
                         />
                         {allText}
@@ -272,14 +272,14 @@
                 }
                 onChange({ ...period, [field]: value });
             };
-            
+
             const handleAmountInputChange = (e) => {
                 const stringValue = e.target.value;
-                setDisplayAmount(stringValue); 
+                setDisplayAmount(stringValue);
 
                 const parsedNum = parseFloat(stringValue);
-                if (stringValue === "" || stringValue === "-") { 
-                    onChange({ ...period, amount: 0 }); 
+                if (stringValue === "" || stringValue === "-") {
+                    onChange({ ...period, amount: 0 });
                 } else if (!isNaN(parsedNum)) {
                     onChange({ ...period, amount: parsedNum });
                 }
@@ -289,33 +289,33 @@
                 <div className="p-3 border border-gray-200 rounded-md grid grid-cols-1 sm:grid-cols-8 gap-2 items-center bg-white shadow-sm text-sm">
                     <div className="sm:col-span-2 grid grid-cols-1 gap-1">
                         <label className="block text-xs font-medium text-gray-700">Start:</label>
-                        <input 
-                            type="time" 
-                            value={period.start} 
+                        <input
+                            type="time"
+                            value={period.start}
                             onChange={(e) => handleTimeChange(e, 'start')}
-                            className="input-field text-xs rate-start-time" 
-                            step="1800" 
+                            className="input-field text-xs rate-start-time"
+                            step="1800"
                         />
                     </div>
                     <div className="sm:col-span-2 grid grid-cols-1 gap-1">
                         <label className="block text-xs font-medium text-gray-700">End:</label>
-                        <input 
-                            type="time" 
-                            value={period.end} 
+                        <input
+                            type="time"
+                            value={period.end}
                             onChange={(e) => handleTimeChange(e, 'end')}
-                            className="input-field text-xs rate-end-time" 
+                            className="input-field text-xs rate-end-time"
                             step="1800"
                         />
                     </div>
                     <div className="sm:col-span-2 grid grid-cols-1 gap-1">
                         <label className="block text-xs font-medium text-gray-700">Amount:</label>
-                        <input 
-                            type="number" 
-                            step="0.0001" 
-                            value={displayAmount} 
+                        <input
+                            type="number"
+                            step="0.0001"
+                            value={displayAmount}
                             onChange={handleAmountInputChange}
-                            min="0" 
-                            className="input-field text-xs rate-amount" 
+                            min="0"
+                            className="input-field text-xs rate-amount"
                         />
                     </div>
                     <div className="sm:col-span-1 flex items-center justify-start sm:justify-center pt-2 sm:pt-0 group relative">
@@ -333,7 +333,7 @@
                             Mark this period as off-peak. This designation can be used for analytical purposes, such as calculating total off-peak consumption.
                         </span>
                     </div>
-                    <button 
+                    <button
                         onClick={onRemove}
                         className="sm:col-span-1 remove-btn text-xs h-8 self-center mt-2 sm:mt-0"
                     >
@@ -386,8 +386,8 @@
                     <div className="rate-periods-container space-y-3">
                         <h5 className="subsection-title text-sm">Rate Time Ranges</h5>
                         {group.ratePeriods.map(period => (
-                            <RatePeriod 
-                                key={period.id} 
+                            <RatePeriod
+                                key={period.id}
                                 period={period}
                                 onChange={(updatedPeriod) => updateRatePeriod(updatedPeriod)}
                                 onRemove={() => removeRatePeriod(period.id)}
@@ -401,7 +401,7 @@
             );
         };
 
-        const MonthRuleSet = ({ rule, type, onUpdateRule, onRemoveRule }) => { 
+        const MonthRuleSet = ({ rule, type, onUpdateRule, onRemoveRule }) => {
             const titlePrefix = type === 'standard' ? 'Standard Tariff Rule' : 'Holiday Month Rule';
             const ruleContext = `${titlePrefix} #${rule.number}`;
 
@@ -427,7 +427,7 @@
                     weekdayGroups: rule.weekdayGroups.filter(g => g.id !== groupId)
                 });
             };
-            
+
             const ruleBgClass = type === 'holiday' ? 'bg-blue-50' : '';
 
             return (
@@ -448,8 +448,8 @@
                     </section>
                     <div className="weekday-groups-container space-y-4 mb-4">
                         {rule.weekdayGroups.map(group => (
-                            <WeekdayGroup 
-                                key={group.id} 
+                            <WeekdayGroup
+                                key={group.id}
                                 group={group}
                                 ruleContext={ruleContext}
                                 onUpdateGroup={updateWeekdayGroup}
@@ -468,31 +468,25 @@
             return (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
                     <div>
-                        <label className="input-label text-xs">Month (1-12):</label>
-                        <input 
-                            type="number" min="1" max="12" 
-                            value={entry.month} 
-                            onChange={(e) => onChange({ ...entry, month: parseInt(e.target.value) || '' })}
-                            className="input-field text-xs override-month" placeholder="e.g., 12" 
+                        <label className="input-label text-xs">Specific Date:</label>
+                        <input
+                            type="date"
+                            value={entry.dateString} // Now storing full date string
+                            onChange={(e) => onChange({ ...entry, dateString: e.target.value })}
+                            className="input-field text-xs override-date"
                         />
                     </div>
-                    <div>
-                        <label className="input-label text-xs">Day(s) (comma-separated):</label>
-                        <input 
-                            type="text" 
-                            value={entry.days.join(',')} 
-                            onChange={(e) => onChange({ ...entry, days: e.target.value.split(',').map(d => parseInt(d.trim())).filter(d => !isNaN(d)) })}
-                            className="input-field text-xs override-days" placeholder="e.g., 25,31" 
-                        />
+                    <div className="sm:col-span-2">
+                        <button onClick={onRemove} className="remove-btn text-xs h-8 w-full">Remove Date</button>
                     </div>
-                    <button onClick={onRemove} className="remove-btn text-xs h-8 self-center sm:self-end">Remove Date</button>
                 </div>
             );
         };
 
         const OverrideRule = ({ rule, onUpdateRule, onRemoveRule }) => {
             const addDateEntry = () => {
-                const newDateEntry = { id: generateId(), month: '', days: [] };
+                // Initialize with an empty string for the date picker
+                const newDateEntry = { id: generateId(), dateString: '' };
                 onUpdateRule({ ...rule, dates: [...rule.dates, newDateEntry] });
             };
             const updateDateEntry = (updatedEntry) => {
@@ -523,8 +517,8 @@
                         <h4 className="subsection-title text-md">Specific Dates for this Override</h4>
                         <div className="override-dates-container space-y-2 mb-3">
                             {rule.dates.map(entry => (
-                                <OverrideDateEntry 
-                                    key={entry.id} 
+                                <OverrideDateEntry
+                                    key={entry.id}
                                     entry={entry}
                                     onChange={updateDateEntry}
                                     onRemove={() => removeDateEntry(entry.id)}
@@ -532,15 +526,15 @@
                             ))}
                         </div>
                         <button onClick={addDateEntry} className="add-btn text-xs add-override-date-btn">
-                            + Add Month/Day(s)
+                            + Add Specific Date
                         </button>
                     </div>
                     <div>
                         <h4 className="subsection-title text-md">Rate for these Override Dates</h4>
                         <div className="override-rate-periods-container space-y-3">
                              {rule.ratePeriods.map(period => (
-                                <RatePeriod 
-                                    key={period.id} 
+                                <RatePeriod
+                                    key={period.id}
                                     period={period}
                                     onChange={updateRatePeriod}
                                     onRemove={() => removeRatePeriod(period.id)}
@@ -555,18 +549,18 @@
             );
         };
 
-        const RatePreviewChart = ({ chartData, selectedWeekStartForChart }) => { 
+        const RatePreviewChart = ({ chartData, selectedWeekStartForChart }) => {
             const chartRef = useRef(null);
-            const chartInstanceRef = useRef(null); 
+            const chartInstanceRef = useRef(null);
 
             useEffect(() => {
-                if (chartRef.current && chartData && typeof Chart !== 'undefined' && selectedWeekStartForChart) { 
+                if (chartRef.current && chartData && typeof Chart !== 'undefined' && selectedWeekStartForChart) {
                     if (chartInstanceRef.current) {
-                        chartInstanceRef.current.destroy(); 
+                        chartInstanceRef.current.destroy();
                     }
                     const ctx = chartRef.current.getContext('2d');
                     chartInstanceRef.current = new Chart(ctx, {
-                        type: 'line', 
+                        type: 'line',
                         data: {
                             labels: chartData.labels,
                             datasets: [{
@@ -575,22 +569,22 @@
                                 borderColor: 'rgb(75, 192, 192)',
                                 backgroundColor: 'rgba(75, 192, 192, 0.5)',
                                 tension: 0.1,
-                                stepped: 'before', 
-                                pointRadius: 0, 
+                                stepped: 'before',
+                                pointRadius: 0,
                                 borderWidth: 2,
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            interaction: { 
+                            interaction: {
                                 mode: 'index',
                                 intersect: false,
                                 axis: 'x'
                             },
                             scales: {
                                 x: {
-                                    title: { display: false }, 
+                                    title: { display: false },
                                     ticks: { autoSkip: true, maxTicksLimit: 24 }
                                 },
                                 y: {
@@ -601,30 +595,30 @@
                             },
                             plugins: {
                                 legend: {
-                                    display: false 
+                                    display: false
                                 },
                                 tooltip: {
-                                    yAlign: 'top',    
-                                    xAlign: 'left',   
-                                    caretPadding: 15, 
+                                    yAlign: 'top',
+                                    xAlign: 'left',
+                                    caretPadding: 15,
                                     callbacks: {
                                         title: function(tooltipItems) {
                                             if (!tooltipItems.length) return '';
                                             const dataIndex = tooltipItems[0].dataIndex;
-                                            const dayOffset = Math.floor(dataIndex / 48); 
+                                            const dayOffset = Math.floor(dataIndex / 48);
                                             const minutesIntoDay = (dataIndex % 48) * 30;
-                                            
+
                                             const [year, month, day] = selectedWeekStartForChart.split('-').map(Number);
-                                            const baseDate = new Date(year, month - 1, day); 
+                                            const baseDate = new Date(year, month - 1, day);
 
                                             const currentDate = new Date(baseDate);
                                             currentDate.setDate(baseDate.getDate() + dayOffset);
-                                            
+
                                             currentDate.setHours(Math.floor(minutesIntoDay / 60));
                                             currentDate.setMinutes(minutesIntoDay % 60);
-                                            
+
                                             const options = { weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit' };
-                                            const formattedDate = currentDate.toLocaleDateString('en-GB', options); 
+                                            const formattedDate = currentDate.toLocaleDateString('en-GB', options);
                                             const formattedTime = `${String(currentDate.getHours()).padStart(2, '0')}:${String(currentDate.getMinutes()).padStart(2, '0')}`;
                                             return `${formattedDate} ${formattedTime}`;
                                         },
@@ -641,10 +635,10 @@
                         chartInstanceRef.current = null;
                     }
                 };
-            }, [chartData, selectedWeekStartForChart]); 
+            }, [chartData, selectedWeekStartForChart]);
 
             return (
-                <div className="relative h-[25vh]"> 
+                <div className="relative h-[25vh]">
                     <canvas ref={chartRef}></canvas>
                 </div>
             );
@@ -662,25 +656,25 @@
             const [overrideRules, setOverrideRules] = useState([]);
             const [jsonOutput, setJsonOutput] = useState('');
             const [statusMessage, setStatusMessage] = useState({ text: '', isError: false });
-            
+
             const [counters, setCounters] = useState({
-                standardRule: 0, holidayRule: 0, overrideRule: 0, 
+                standardRule: 0, holidayRule: 0, overrideRule: 0,
                 weekdayGroup: 0, ratePeriod: 0, dateEntry: 0,
             });
 
             const [selectedWeekStart, setSelectedWeekStart] = useState(() => {
                 const today = new Date();
-                const dayOfWeek = today.getDay(); 
-                const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); 
-                return new Date(today.setDate(diff)).toISOString().split('T')[0]; 
+                const dayOfWeek = today.getDay();
+                const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+                return new Date(today.setDate(diff)).toISOString().split('T')[0];
             });
 
             const getNextId = useCallback((type) => {
                 const nextVal = counters[type] + 1;
                 setCounters(prev => ({ ...prev, [type]: nextVal }));
-                return `${type}-${nextVal}-${Date.now()}`; 
-            }, [counters]); 
-            
+                return `${type}-${nextVal}-${Date.now()}`;
+            }, [counters]);
+
             const clearAllConfigurations = useCallback(() => {
                 setStandardRules([]);
                 setHolidayCountry('');
@@ -695,10 +689,10 @@
             }, []);
 
             const addStandardRule = () => {
-                const newRule = { 
-                    id: getNextId('standardRule'), 
-                    number: counters.standardRule + 1, 
-                    months: [], 
+                const newRule = {
+                    id: getNextId('standardRule'),
+                    number: counters.standardRule + 1,
+                    months: [],
                     weekdayGroups: [{ id: getNextId('weekdayGroup'), weekdays: [], ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }] }]
                 };
                 setStandardRules(prev => [...prev, newRule]);
@@ -711,10 +705,10 @@
             };
 
             const addHolidayMonthRule = () => {
-                const newRule = { 
-                    id: getNextId('holidayRule'), 
-                    number: counters.holidayRule + 1, 
-                    months: [], 
+                const newRule = {
+                    id: getNextId('holidayRule'),
+                    number: counters.holidayRule + 1,
+                    months: [],
                     weekdayGroups: [{ id: getNextId('weekdayGroup'), weekdays: [], ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }] }]
                 };
                 setHolidayMonthRules(prev => [...prev, newRule]);
@@ -725,12 +719,13 @@
             const removeHolidayMonthRule = (ruleId) => {
                 setHolidayMonthRules(prev => prev.filter(r => r.id !== ruleId));
             };
-            
+
             const addOverrideRuleHandler = () => {
                 const newRule = {
                     id: getNextId('overrideRule'),
                     number: counters.overrideRule + 1,
-                    dates: [{ id: getNextId('dateEntry'), month: '', days: [] }],
+                    // Initialize with a default date or empty string for the date picker
+                    dates: [{ id: getNextId('dateEntry'), dateString: '' }],
                     ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }]
                 };
                 setOverrideRules(prev => [...prev, newRule]);
@@ -759,7 +754,7 @@
                     const holidaysData = hd.getHolidays(new Date().getFullYear());
                     if (holidaysData && holidaysData.length > 0) {
                         setFetchedHolidays(holidaysData);
-                        setFetchedHolidaysStatus(''); 
+                        setFetchedHolidaysStatus('');
                     } else {
                         setFetchedHolidays([]);
                         setFetchedHolidaysStatus(`No holidays found for ${country}${state ? ` (${state})` : ''} or region not supported.`);
@@ -772,10 +767,10 @@
                     setFetchedHolidays([]);
                     setFetchedHolidaysStatus(errorMsg);
                 }
-            }, 500), []); 
+            }, 500), []);
 
             useEffect(() => {
-                if (holidayCountry) { 
+                if (holidayCountry) {
                     fetchHolidaysCallback(holidayCountry, holidayState);
                 } else {
                      setFetchedHolidays([]);
@@ -791,24 +786,29 @@
                 for (const r of rateTimeranges) {
                     if (!r.start || !r.end) return `${contextMessage}: A rate period is missing a start or end time.`;
                     let startMinutes = timeStringToMinutes(r.start);
-                    let endMinutes = timeStringToMinutes(r.end);
+                    let endMinutes = (r.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(r.end); // 00:00 means end of day
+
+                    // Validate if times are on 00 or 30 minute marks
                     if (startMinutes % 30 !== 0) return `${contextMessage}: Start time ${r.start} must be on a :00 or :30 mark.`;
                     if (r.end !== "00:00" && (endMinutes % 30 !== 0)) return `${contextMessage}: End time ${r.end} must be on a :00 or :30 mark (or be "00:00" for end of day).`;
-                    
-                    let effectiveEndMinutes = (r.end === "00:00") ? MINUTES_IN_DAY : endMinutes;
-            
-                    if (startMinutes === 0 && effectiveEndMinutes === MINUTES_IN_DAY) {
-                        for (let m = 0; m < MINUTES_IN_DAY; m++) minuteCoverage[m]++;
-                        if (rateTimeranges.length === 1) continue; 
-                    } else if (startMinutes >= effectiveEndMinutes && !(startMinutes > endMinutes && effectiveEndMinutes !== MINUTES_IN_DAY) ) {
-                         return `${contextMessage}: Period ${r.start}-${r.end} has zero or negative duration.`;
+
+                    if (startMinutes === 0 && endMinutes === MINUTES_IN_DAY) {
+                        // Full day coverage, prevent double counting if only one range is full day
+                        if (rateTimeranges.length === 1) {
+                            for (let m = 0; m < MINUTES_IN_DAY; m++) minuteCoverage[m]++;
+                            continue;
+                        }
+                    } else if (startMinutes >= endMinutes && !(startMinutes > timeStringToMinutes(r.end) && endMinutes !== MINUTES_IN_DAY) ) {
+                         return `${contextMessage}: Period ${r.start}-${r.end} has zero or negative duration or spans across midnight incorrectly.`;
                     }
-            
-                    if (startMinutes < effectiveEndMinutes) {
-                        for (let m = startMinutes; m < effectiveEndMinutes; m++) minuteCoverage[m]++;
-                    } else { 
+
+                    if (startMinutes < endMinutes) {
+                        // Normal time range within a day
+                        for (let m = startMinutes; m < endMinutes; m++) minuteCoverage[m]++;
+                    } else {
+                        // Spans across midnight (e.g., 22:00 - 06:00)
                         for (let m = startMinutes; m < MINUTES_IN_DAY; m++) minuteCoverage[m]++;
-                        for (let m = 0; m < effectiveEndMinutes; m++) minuteCoverage[m]++; 
+                        for (let m = 0; m < endMinutes; m++) minuteCoverage[m]++;
                     }
                 }
                 for (let m = 0; m < MINUTES_IN_DAY; m++) {
@@ -823,7 +823,7 @@
                 rules.forEach(rule => {
                     const contextPrefix = `${ruleTypeLabel} #${rule.number}`;
                     if (rule.months.length === 0) { validationErrors.push(`${contextPrefix} has no months selected.`); return; }
-                    
+
                     rule.months.forEach(month => {
                         if (overallCoveredMonthsSet.has(month)) {
                             validationErrors.push(`Conflict: Month ${MONTHS_DATA.find(m=>m.value===month)?.name} (in ${ruleTypeLabel} #${rule.number}) is already assigned in another ${ruleTypeLabel} rule.`);
@@ -839,7 +839,7 @@
                     rule.weekdayGroups.forEach(group => {
                         const groupContext = `${contextPrefix}, Weekday Group (ID: ${group.id.slice(-5)})`;
                         if (group.weekdays.length === 0) { validationErrors.push(`${groupContext}: No weekdays selected.`); return; }
-                        
+
                         group.weekdays.forEach(wd => {
                             if (weekdaysCoveredInThisRule.has(wd)) {
                                 validationErrors.push(`Conflict in ${contextPrefix}: Weekday ${WEEKDAYS_DATA.find(d=>d.value===wd)?.name} is in multiple Weekday Groups.`);
@@ -854,17 +854,17 @@
                         if (timeValidationError) validationErrors.push(timeValidationError);
 
                         if (group.ratePeriods.length > 0 && !timeValidationError) {
-                            weekStructureForRule.push({ 
-                                iso_weekday: [...group.weekdays].sort((a,b)=>a-b), 
-                                day_structure: { 
+                            weekStructureForRule.push({
+                                iso_weekday: [...group.weekdays].sort((a,b)=>a-b),
+                                day_structure: {
                                     rate_timeranges: group.ratePeriods.map(rp => {
                                         const outputRp = { start: rp.start, end: rp.end, amount: rp.amount };
                                         if (rp.isOffpeak) {
-                                            outputRp.label = "OFF_PEAK"; 
+                                            outputRp.label = "OFF_PEAK";
                                         }
                                         return outputRp;
                                     })
-                                } 
+                                }
                             });
                         }
                     });
@@ -883,7 +883,7 @@
             const handleGenerateJson = useCallback(() => {
                 let validationErrors = [];
                 const finalJson = {};
-                
+
                 let overallStandardMonthsCovered = new Set();
                 const parsedStandardRules = parseAndValidateRuleSetForReact(standardRules, 'Standard Tariff Rule', validationErrors, overallStandardMonthsCovered);
                 if (parsedStandardRules.length > 0) finalJson.month_structure = parsedStandardRules;
@@ -907,38 +907,57 @@
                 }
 
                 const parsedOverrideRules = [];
-                let allOverriddenDates = new Set();
+                let allOverriddenDates = new Set(); // Use this to check for duplicate override dates
                 overrideRules.forEach(rule => {
                     const overrideContext = `Override Rule #${rule.number}`;
-                    const annualDates = [];
-                    if (rule.dates.length === 0) validationErrors.push(`${overrideContext}: No specific dates (month/day) defined.`);
+                    const annualDatesMap = new Map(); // Map to group dates by month for this rule
+
+                    if (rule.dates.length === 0) {
+                        validationErrors.push(`${overrideContext}: No specific dates defined for override.`);
+                    }
+
                     rule.dates.forEach(entry => {
-                        if (entry.month && entry.days.length > 0) {
-                            entry.days.forEach(day => {
-                                const dateKey = `${entry.month}-${day}`;
-                                if (allOverriddenDates.has(dateKey)) validationErrors.push(`Conflict: Date ${MONTHS_DATA.find(m=>m.value===entry.month)?.name} ${day} is defined in multiple Override Rules or times.`);
-                                allOverriddenDates.add(dateKey);
-                            });
-                            annualDates.push({ month: entry.month, days: [...entry.days].sort((a,b)=>a-b) });
-                        } else if (entry.month || entry.days.length > 0) {
-                            validationErrors.push(`${overrideContext}: Incomplete month/day entry found.`);
+                        if (!entry.dateString) {
+                            validationErrors.push(`${overrideContext}: An override date entry is empty.`);
+                            return;
                         }
+
+                        const [year, month, day] = entry.dateString.split('-').map(Number);
+                        const dateKey = `${month}-${day}`; // Format for duplicate check
+
+                        if (allOverriddenDates.has(dateKey)) {
+                            validationErrors.push(`Conflict: Date ${MONTHS_DATA.find(m=>m.value===month)?.name} ${day} is defined in multiple Override Rules or multiple times within the same rule.`);
+                        }
+                        allOverriddenDates.add(dateKey); // Add to overall set
+
+                        if (!annualDatesMap.has(month)) {
+                            annualDatesMap.set(month, []);
+                        }
+                        annualDatesMap.get(month).push(day);
                     });
+
+                    // Convert map to desired annual_date array format
+                    const annualDates = Array.from(annualDatesMap.entries()).map(([month, days]) => ({
+                        month: month,
+                        days: days.sort((a, b) => a - b) // Sort days for consistent output
+                    }));
+                    
                     if (rule.ratePeriods.length === 0 && annualDates.length > 0) validationErrors.push(`${overrideContext}: No rate time ranges defined for the specified dates.`);
                     const timeValidationError = validateTimeRangesForReact(rule.ratePeriods, overrideContext);
                     if (timeValidationError) validationErrors.push(timeValidationError);
+
                     if (annualDates.length > 0 && rule.ratePeriods.length > 0 && !timeValidationError) {
-                        parsedOverrideRules.push({ 
-                            annual_date: annualDates, 
-                            day_structure: { 
+                        parsedOverrideRules.push({
+                            annual_date: annualDates,
+                            day_structure: {
                                 rate_timeranges: rule.ratePeriods.map(rp => {
                                     const outputRp = { start: rp.start, end: rp.end, amount: rp.amount };
                                     if (rp.isOffpeak) {
-                                        outputRp.label = "OFF_PEAK"; 
+                                        outputRp.label = "OFF_PEAK";
                                     }
                                     return outputRp;
                                 })
-                            } 
+                            }
                         });
                     }
                 });
@@ -957,12 +976,12 @@
                     }
                 }
             }, [standardRules, holidayMonthRules, overrideRules, holidayCountry, holidayState, parseAndValidateRuleSetForReact, validateTimeRangesForReact]);
-            
+
             // --- Example Loaders ---
             const loadFlatRateExample = useCallback(() => {
                 clearAllConfigurations();
-                setStandardRules([{ 
-                    id: 'std-flat-1', number: 1, months: [...ALL_MONTH_NUMBERS], 
+                setStandardRules([{
+                    id: 'std-flat-1', number: 1, months: [...ALL_MONTH_NUMBERS],
                     weekdayGroups: [{ id: 'std-flat-wg-1', weekdays: [...ALL_WEEKDAY_NUMBERS], ratePeriods: [{id: 'std-flat-rp-1', start: "00:00", end: "00:00", amount: 0.15, isOffpeak: false }] }]
                 }]);
                 setStatusMessage({ text: "Flat Rate example loaded.", isError: false });
@@ -988,8 +1007,8 @@
                 setStandardRules([{
                     id: 'std-dualwknd-1', number: 1, months: [...ALL_MONTH_NUMBERS],
                     weekdayGroups: [
-                        { 
-                            id: 'std-dualwknd-wg-1', weekdays: [1,2,3,4,5], 
+                        {
+                            id: 'std-dualwknd-wg-1', weekdays: [1,2,3,4,5],
                             ratePeriods: [
                                 { id: 'std-dualwknd-rp-1', start: "00:00", end: "07:00", amount: 0.10, isOffpeak: true },
                                 { id: 'std-dualwknd-rp-2', start: "07:00", end: "00:00", amount: 0.25, isOffpeak: false }
@@ -1003,12 +1022,12 @@
                 }]);
                 setStatusMessage({ text: "Dual Rate (Weekends Off-peak) example loaded.", isError: false });
             }, [clearAllConfigurations]);
-            
+
             const loadFullyComplicatedExample = useCallback(() => {
                 clearAllConfigurations();
                 setStandardRules([
-                    { 
-                        id: 'std-comp-1', number: 1, months: [1, 2, 3, 10, 11, 12], 
+                    {
+                        id: 'std-comp-1', number: 1, months: [1, 2, 3, 10, 11, 12],
                         weekdayGroups: [
                             { id: 'std-comp-wg-1', weekdays: [1,2,3,4,5], ratePeriods: [{ id: 'std-comp-rp-1', start: "00:00", end: "12:00", amount: 0.10, isOffpeak: true }, { id: 'std-comp-rp-2', start: "12:00", end: "00:00", amount: 0.20, isOffpeak: false }] },
                             { id: 'std-comp-wg-2', weekdays: [6,7], ratePeriods: [{ id: 'std-comp-rp-3', start: "00:00", end: "00:00", amount: 0.10, isOffpeak: true }] }
@@ -1027,23 +1046,24 @@
                 ]);
                 setOverrideRules([{
                     id: 'ovr-comp-1', number: 1,
-                    dates: [ {id: 'ovr-dt-1', month: 12, days: [25,31]}, {id: 'ovr-dt-2', month: 2, days: [29]} ],
+                    // Use full date strings for the override example
+                    dates: [ {id: 'ovr-dt-1', dateString: '2025-12-25'}, {id: 'ovr-dt-2', dateString: '2025-12-31'}, {id: 'ovr-dt-3', dateString: '2025-02-29'} ],
                     ratePeriods: [{id: 'ovr-rp-1', start: "00:00", end: "00:00", amount: 0.10, isOffpeak: false}]
                 }]);
                 setStatusMessage({ text: "Fully Complicated example loaded.", isError: false });
             }, [clearAllConfigurations]);
-            
-            useEffect(() => { 
+
+            useEffect(() => {
                 handleGenerateJson();
             }, [standardRules, holidayMonthRules, overrideRules, holidayCountry, holidayState, handleGenerateJson]);
 
             useEffect(() => {
-                loadFlatRateExample(); 
-            }, [loadFlatRateExample]); 
+                loadFlatRateExample();
+            }, [loadFlatRateExample]);
 
             // --- Chart Data Generation ---
             const chartData = useMemo(() => {
-                const weekStart = new Date(selectedWeekStart + "T00:00:00"); 
+                const weekStart = new Date(selectedWeekStart + "T00:00:00");
                 const labels = [];
                 const dataPoints = [];
                 let currentHolidays = [];
@@ -1057,19 +1077,20 @@
                         }
                     } catch (e) { console.warn("Could not fetch holidays for chart:", e); }
                 }
-                
+
                 for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
                     const currentDate = new Date(weekStart);
                     currentDate.setDate(weekStart.getDate() + dayOffset);
-                    const currentMonth = currentDate.getMonth() + 1; 
+                    const currentMonth = currentDate.getMonth() + 1;
                     const currentDayOfMonth = currentDate.getDate();
-                    let currentIsoWeekday = currentDate.getDay(); 
-                    if (currentIsoWeekday === 0) currentIsoWeekday = 7; 
+                    const currentYear = currentDate.getFullYear();
+                    let currentIsoWeekday = currentDate.getDay();
+                    if (currentIsoWeekday === 0) currentIsoWeekday = 7;
 
-                    const dateStringForHolidayCheck = `${currentDate.getFullYear()}-${String(currentMonth).padStart(2,'0')}-${String(currentDayOfMonth).padStart(2,'0')}`;
+                    const dateStringForHolidayCheck = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(currentDayOfMonth).padStart(2,'0')}`;
                     const isHoliday = currentHolidays.some(h => h.date.startsWith(dateStringForHolidayCheck));
 
-                    for (let interval = 0; interval < 48; interval++) { 
+                    for (let interval = 0; interval < 48; interval++) {
                         const minutesIntoDay = interval * 30;
                         const timeLabel = formatTimeForDisplay(minutesIntoDay);
                         const dayLabel = WEEKDAYS_DATA.find(wd => wd.value === currentIsoWeekday)?.name.substring(0,3) || 'Day';
@@ -1077,18 +1098,20 @@
 
                         let rate = null;
 
-                        const activeOverride = overrideRules.find(or => 
-                            or.dates.some(d => d.month === currentMonth && d.days.includes(currentDayOfMonth))
+                        // Check for override rules first
+                        const activeOverride = overrideRules.find(or =>
+                            or.dates.some(d => d.dateString === dateStringForHolidayCheck) // Check against the full date string
                         );
                         if (activeOverride) {
                             for (const rp of activeOverride.ratePeriods) {
                                 const startM = timeStringToMinutes(rp.start);
                                 const endM = (rp.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(rp.end);
-                                if (startM <= minutesIntoDay && minutesIntoDay < endM) { rate = rp.amount; break; } 
+                                if (startM <= minutesIntoDay && minutesIntoDay < endM) { rate = rp.amount; break; }
                                 else if (startM > endM && (minutesIntoDay >= startM || minutesIntoDay < endM)) { rate = rp.amount; break; }
                             }
                         }
 
+                        // If no override, check holiday rules
                         if (rate === null && isHoliday && holidayCountry) {
                              const applicableHolidayRule = holidayMonthRules.find(hr => hr.months.includes(currentMonth));
                              if(applicableHolidayRule) {
@@ -1097,13 +1120,14 @@
                                     for (const rp of applicableWeekdayGroup.ratePeriods) {
                                         const startM = timeStringToMinutes(rp.start);
                                         const endM = (rp.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(rp.end);
-                                        if (startM <= minutesIntoDay && minutesIntoDay < endM) { rate = rp.amount; break; } 
+                                        if (startM <= minutesIntoDay && minutesIntoDay < endM) { rate = rp.amount; break; }
                                         else if (startM > endM && (minutesIntoDay >= startM || minutesIntoDay < endM)) { rate = rp.amount; break; }
                                     }
                                 }
                              }
                         }
-                        
+
+                        // If no override and not a holiday, check standard rules
                         if (rate === null) {
                             const applicableStandardRule = standardRules.find(sr => sr.months.includes(currentMonth));
                             if(applicableStandardRule) {
@@ -1112,17 +1136,17 @@
                                      for (const rp of applicableWeekdayGroup.ratePeriods) {
                                         const startM = timeStringToMinutes(rp.start);
                                         const endM = (rp.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(rp.end);
-                                        if (startM <= minutesIntoDay && minutesIntoDay < endM) { rate = rp.amount; break; } 
+                                        if (startM <= minutesIntoDay && minutesIntoDay < endM) { rate = rp.amount; break; }
                                         else if (startM > endM && (minutesIntoDay >= startM || minutesIntoDay < endM)) { rate = rp.amount; break; }
                                     }
                                 }
                             }
                         }
-                        dataPoints.push(rate !== null ? rate : 0); 
+                        dataPoints.push(rate !== null ? rate : 0);
                     }
                 }
                 return { labels, data: dataPoints };
-            }, [selectedWeekStart, standardRules, holidayMonthRules, overrideRules, holidayCountry, holidayState, fetchedHolidays]); 
+            }, [selectedWeekStart, standardRules, holidayMonthRules, overrideRules, holidayCountry, holidayState, fetchedHolidays]);
 
 
             return (
@@ -1145,10 +1169,10 @@
 
                     {/* Rate Preview Chart Section */}
                     <section className="section-container sticky-chart-section !py-2 px-6"> {/* Reduced vertical padding */}
-                        <div className="flex items-center mb-1"> 
+                        <div className="flex items-center mb-1">
                             <label htmlFor="weekPicker" className="input-label mr-2 mb-0">Select Week to Preview:</label>
-                            <input 
-                                type="date" 
+                            <input
+                                type="date"
                                 id="weekPicker"
                                 value={selectedWeekStart}
                                 onChange={(e) => setSelectedWeekStart(e.target.value)}
@@ -1167,11 +1191,11 @@
 
                     <section className="section-container">
                         <h2 className="section-header">Standard Tariff Rules</h2>
-                        <div id="tariffRulesContainerReact" className="space-y-6 mb-6"> 
+                        <div id="tariffRulesContainerReact" className="space-y-6 mb-6">
                             {standardRules.map(rule => (
-                                <MonthRuleSet 
-                                    key={rule.id} 
-                                    rule={rule} 
+                                <MonthRuleSet
+                                    key={rule.id}
+                                    rule={rule}
                                     type="standard"
                                     onUpdateRule={updateStandardRule}
                                     onRemoveRule={() => removeStandardRule(rule.id)}
@@ -1183,7 +1207,7 @@
 
                     <section className="section-container">
                         <h2 className="section-header">Country Holidays</h2>
-                        <div id="countryHolidaysConfigReact" className="mb-6 p-4 border border-dashed border-blue-300 rounded-lg bg-blue-50"> 
+                        <div id="countryHolidaysConfigReact" className="mb-6 p-4 border border-dashed border-blue-300 rounded-lg bg-blue-50">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label htmlFor="holidayCountryReact" className="input-label">Country Code (e.g., AU):</label>
@@ -1194,9 +1218,9 @@
                                     <input type="text" id="holidayStateReact" className="input-field" placeholder="ACT" value={holidayState} onChange={e => setHolidayState(e.target.value.toUpperCase())} />
                                 </div>
                             </div>
-                            <div id="fetchedHolidaysListContainerReact" className="mt-4"> 
+                            <div id="fetchedHolidaysListContainerReact" className="mt-4">
                                 <p className="text-sm text-gray-600 mb-1">Recognized public holidays for {new Date(selectedWeekStart).getFullYear()}:</p>
-                                <div id="fetchedHolidaysListReact" className="text-xs max-h-32 overflow-y-auto bg-indigo-100 p-2 rounded"> 
+                                <div id="fetchedHolidaysListReact" className="text-xs max-h-32 overflow-y-auto bg-indigo-100 p-2 rounded">
                                     {fetchedHolidaysStatus && <p className="text-gray-500">{fetchedHolidaysStatus}</p>}
                                     {fetchedHolidays.length > 0 && (
                                         <ul className="list-disc list-inside space-y-0.5">
@@ -1209,11 +1233,11 @@
                             </div>
                             <p className="text-sm text-gray-600 mb-1 mt-4">Define specific rate structures for holidays within the selected country/state.</p>
                         </div>
-                        <div id="holidayMonthRulesContainerReact" className="space-y-6 mb-6"> 
+                        <div id="holidayMonthRulesContainerReact" className="space-y-6 mb-6">
                              {holidayMonthRules.map(rule => (
-                                <MonthRuleSet 
-                                    key={rule.id} 
-                                    rule={rule} 
+                                <MonthRuleSet
+                                    key={rule.id}
+                                    rule={rule}
                                     type="holiday"
                                     onUpdateRule={updateHolidayMonthRule}
                                     onRemoveRule={() => removeHolidayMonthRule(rule.id)}
@@ -1226,9 +1250,9 @@
                     <section className="section-container">
                         <h2 className="section-header">Override Specific Days</h2>
                         <p className="text-sm text-gray-600 mb-4">Define special rates for specific calendar dates (e.g., Christmas, New Year's Eve).</p>
-                        <div id="overrideRulesContainerReact" className="space-y-6 mb-6"> 
+                        <div id="overrideRulesContainerReact" className="space-y-6 mb-6">
                             {overrideRules.map(rule => (
-                                <OverrideRule 
+                                <OverrideRule
                                     key={rule.id}
                                     rule={rule}
                                     onUpdateRule={updateOverrideRule}
@@ -1243,24 +1267,24 @@
                         <h2 className="subsection-title text-xl mb-4 text-gray-700 border-b pb-2">Generate & View JSON</h2>
                         <div className="flex flex-col sm:flex-row gap-4 mb-4">
                             <button onClick={handleGenerateJson} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg">Validate & Generate JSON</button>
-                            <button 
+                            <button
                                 onClick={() => {
                                     if (typeof window.copyJsonToClipboardGlobal === 'function') {
-                                        window.copyJsonToClipboardGlobal(jsonOutput, setStatusMessage); 
+                                        window.copyJsonToClipboardGlobal(jsonOutput, setStatusMessage);
                                     } else {
                                         console.error("Global copy function not defined");
                                         setStatusMessage({text: "Copy function error. See console.", isError: true});
                                     }
-                                }} 
-                                className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg" 
+                                }}
+                                className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg"
                                 disabled={!jsonOutput}
                             >
                                 Copy JSON to Clipboard
                             </button>
                         </div>
                         {statusMessage.text && (
-                             <div 
-                                id="statusMessageReact" 
+                             <div
+                                id="statusMessageReact"
                                 className={`mb-2 text-sm font-medium text-center p-2 rounded-md ${statusMessage.isError ? 'text-red-700 bg-red-100 border border-red-300 text-left' : 'text-green-700 bg-green-100 border border-green-300'}`}
                                 dangerouslySetInnerHTML={{ __html: statusMessage.text.replace(/\n/g, '<br>') }}
                              />
@@ -1276,9 +1300,9 @@
         };
 
         window.showStatusMessageGlobal = (message, isError, reactSetStatusMessage) => {
-            if (reactSetStatusMessage) { 
+            if (reactSetStatusMessage) {
                 reactSetStatusMessage({text: message, isError: isError });
-            } else { 
+            } else {
                 const statusDiv = document.getElementById('statusMessageReact') || document.getElementById('statusMessage');
                 if (statusDiv) {
                     statusDiv.innerHTML = message.replace(/\n/g, '<br>');
@@ -1320,7 +1344,7 @@
                             userErrorMessage += "<br/>Check browser settings for clipboard permissions for this site, or try focusing the document before copying.";
                         }
                          userErrorMessage += "<br/>You may need to <a href='https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText#browser_compatibility' target='_blank' class='text-blue-600 hover:underline'>check browser compatibility and requirements</a> or copy the text manually.";
-                    } else if (err && err.message) { 
+                    } else if (err && err.message) {
                         userErrorMessage = `Failed to copy: ${err.name || 'Error'} - ${err.message}`;
                     }
                     showStatus(userErrorMessage, true);
