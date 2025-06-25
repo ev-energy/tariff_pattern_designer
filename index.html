@@ -1046,8 +1046,8 @@
                 ]);
                 setOverrideRules([{
                     id: 'ovr-comp-1', number: 1,
-                    // Use full date strings for the override example
-                    dates: [ {id: 'ovr-dt-1', dateString: '2025-12-25'}, {id: 'ovr-dt-2', dateString: '2025-12-31'}, {id: 'ovr-dt-3', dateString: '2025-02-29'} ],
+                    // Use full date strings for the override example, updated 29/02 to a valid leap year
+                    dates: [ {id: 'ovr-dt-1', dateString: '2025-12-25'}, {id: 'ovr-dt-2', dateString: '2025-12-31'}, {id: 'ovr-dt-3', dateString: '2024-02-29'} ], // Changed 2025-02-29 to 2024-02-29
                     ratePeriods: [{id: 'ovr-rp-1', start: "00:00", end: "00:00", amount: 0.10, isOffpeak: false}]
                 }]);
                 setStatusMessage({ text: "Fully Complicated example loaded.", isError: false });
@@ -1100,7 +1100,15 @@
 
                         // Check for override rules first
                         const activeOverride = overrideRules.find(or =>
-                            or.dates.some(d => d.dateString === dateStringForHolidayCheck) // Check against the full date string
+                            // For override rules, we check if ANY of the selected dates (month/day) match the current day in the loop
+                            // regardless of the year used in the date picker input.
+                            or.dates.some(d => {
+                                if (d.dateString) {
+                                    const [, m, day] = d.dateString.split('-').map(Number);
+                                    return m === currentMonth && day === currentDayOfMonth;
+                                }
+                                return false;
+                            })
                         );
                         if (activeOverride) {
                             for (const rp of activeOverride.ratePeriods) {
