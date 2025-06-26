@@ -188,8 +188,16 @@
         };
 
         const timeStringToMinutes = (timeStr) => {
-            if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return 0;
-            const [hours, minutes] = timeStr.split(':').map(Number);
+            if (!timeStr || typeof timeStr !== 'string') return 0;
+            // Handle HH:mm:ss or HH:mm
+            const parts = timeStr.split(':');
+            if (parts.length < 2) return 0; // Not a valid time format
+
+            const hours = parseInt(parts[0], 10);
+            const minutes = parseInt(parts[1], 10);
+
+            if (isNaN(hours) || isNaN(minutes)) return 0; // Invalid numbers
+
             return (hours * 60) + minutes;
         };
 
@@ -655,6 +663,7 @@
             const [fetchedHolidaysStatus, setFetchedHolidaysStatus] = useState('Awaiting country/state input...');
             const [overrideRules, setOverrideRules] = useState([]);
             const [jsonOutput, setJsonOutput] = useState('');
+            const [loadJsonInput, setLoadJsonInput] = useState(''); // New state for JSON input
             const [statusMessage, setStatusMessage] = useState({ text: '', isError: false });
 
             const [counters, setCounters] = useState({
@@ -684,6 +693,7 @@
                 setFetchedHolidays([]);
                 setFetchedHolidaysStatus('Awaiting country/state input...');
                 setJsonOutput('');
+                setLoadJsonInput(''); // Clear input JSON as well
                 setStatusMessage({ text: '', isError: false });
                 setCounters({ standardRule: 0, holidayRule: 0, overrideRule: 0, weekdayGroup: 0, ratePeriod: 0, dateEntry: 0 });
             }, []);
@@ -977,6 +987,108 @@
                 }
             }, [standardRules, holidayMonthRules, overrideRules, holidayCountry, holidayState, parseAndValidateRuleSetForReact, validateTimeRangesForReact]);
 
+            const handleLoadJson = useCallback(() => {
+                try {
+                    const parsedJson = JSON.parse(loadJsonInput);
+                    clearAllConfigurations(); // Clear existing state before loading new
+
+                    // Reconstruct standard rules
+                    if (parsedJson.month_structure) {
+                        const newStandardRules = parsedJson.month_structure.map((rule, idx) => {
+                            const newWeekdayGroups = rule.week_structure.map(wg => ({
+                                id: generateId(),
+                                weekdays: wg.iso_weekday,
+                                ratePeriods: wg.day_structure.rate_timeranges.map(rp => ({
+                                    id: generateId(),
+                                    start: formatTimeForDisplay(timeStringToMinutes(rp.start)), // Normalize time format
+                                    end: formatTimeForDisplay(timeStringToMinutes(rp.end)),     // Normalize time format
+                                    amount: rp.amount,
+                                    isOffpeak: rp.label === "OFF_PEAK"
+                                }))
+                            }));
+                            return {
+                                id: generateId(),
+                                number: idx + 1, // Reassign numbers based on order
+                                months: rule.month,
+                                weekdayGroups: newWeekdayGroups
+                            };
+                        });
+                        setStandardRules(newStandardRules);
+                    }
+
+                    // Reconstruct country holidays
+                    if (parsedJson.country_holidays) {
+                        setHolidayCountry(parsedJson.country_holidays.country || '');
+                        setHolidayState(parsedJson.country_holidays.state || '');
+                        if (parsedJson.country_holidays.month_structure) {
+                            const newHolidayRules = parsedJson.country_holidays.month_structure.map((rule, idx) => {
+                                const newWeekdayGroups = rule.week_structure.map(wg => ({
+                                    id: generateId(),
+                                    weekdays: wg.iso_weekday,
+                                    ratePeriods: wg.day_structure.rate_timeranges.map(rp => ({
+                                        id: generateId(),
+                                        start: formatTimeForDisplay(timeStringToMinutes(rp.start)), // Normalize time format
+                                        end: formatTimeForDisplay(timeStringToMinutes(rp.end)),     // Normalize time format
+                                        amount: rp.amount,
+                                        isOffpeak: rp.label === "OFF_PEAK"
+                                    }))
+                                }));
+                                return {
+                                    id: generateId(),
+                                    number: idx + 1, // Reassign numbers
+                                    months: rule.month,
+                                    weekdayGroups: newWeekdayGroups
+                                };
+                            });
+                            setHolidayMonthRules(newHolidayRules);
+                        }
+                    }
+
+                    // Reconstruct override rules
+                    if (parsedJson.override) {
+                        const newOverrideRules = parsedJson.override.map((rule, idx) => {
+                            const newDates = [];
+                            rule.annual_date.forEach(ad => {
+                                // For simplicity, pick a dummy leap year like 2024 for display in date pickers
+                                // The month and day are the crucial parts for the JSON output.
+                                const yearForDisplay = 2024; // Arbitrary leap year for display
+                                ad.days.forEach(day => {
+                                    const monthStr = String(ad.month).padStart(2, '0');
+                                    const dayStr = String(day).padStart(2, '0');
+                                    newDates.push({
+                                        id: generateId(),
+                                        dateString: `${yearForDisplay}-${monthStr}-${dayStr}`
+                                    });
+                                });
+                            });
+
+                            const newRatePeriods = rule.day_structure.rate_timeranges.map(rp => ({
+                                id: generateId(),
+                                start: formatTimeForDisplay(timeStringToMinutes(rp.start)), // Normalize time format
+                                end: formatTimeForDisplay(timeStringToMinutes(rp.end)),     // Normalize time format
+                                amount: rp.amount,
+                                isOffpeak: rp.label === "OFF_PEAK"
+                            }));
+                            return {
+                                id: generateId(),
+                                number: idx + 1, // Reassign numbers
+                                dates: newDates,
+                                ratePeriods: newRatePeriods
+                            };
+                        });
+                        setOverrideRules(newOverrideRules);
+                    }
+
+                    setStatusMessage({ text: "JSON loaded successfully! Generating output...", isError: false });
+                    // Trigger JSON generation after state updates
+                    // This will be called via useEffect due to dependencies on state changes
+                } catch (error) {
+                    console.error("Error loading JSON:", error);
+                    setStatusMessage({ text: `Failed to load JSON: ${error.message}. Please check format.`, isError: true });
+                }
+            }, [loadJsonInput, clearAllConfigurations, getNextId]);
+
+
             // --- Example Loaders ---
             const loadFlatRateExample = useCallback(() => {
                 clearAllConfigurations();
@@ -1046,7 +1158,7 @@
                 ]);
                 setOverrideRules([{
                     id: 'ovr-comp-1', number: 1,
-                    // Use full date strings for the override example, updated 29/02 to a valid leap year
+                    // Use full date strings for the override example, updated 29/02 to a valid leap year for display
                     dates: [ {id: 'ovr-dt-1', dateString: '2025-12-25'}, {id: 'ovr-dt-2', dateString: '2025-12-31'}, {id: 'ovr-dt-3', dateString: '2024-02-29'} ], // Changed 2025-02-29 to 2024-02-29
                     ratePeriods: [{id: 'ovr-rp-1', start: "00:00", end: "00:00", amount: 0.10, isOffpeak: false}]
                 }]);
@@ -1060,6 +1172,15 @@
             useEffect(() => {
                 loadFlatRateExample();
             }, [loadFlatRateExample]);
+
+            // Function to scroll to the Load JSON section
+            const scrollToLoadJson = useCallback(() => {
+                const loadJsonSection = document.getElementById('load-json-section');
+                if (loadJsonSection) {
+                    loadJsonSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, []);
+
 
             // --- Chart Data Generation ---
             const chartData = useMemo(() => {
@@ -1173,6 +1294,16 @@
                             <button onClick={loadDualRateWeekendsOffpeakExample} className="quick-start-btn">Dual Rate (Weekend Off-peak)</button>
                             <button onClick={loadFullyComplicatedExample} className="quick-start-btn">Fully Complicated Example</button>
                         </div>
+                        {/* New section for Load Your Own JSON button */}
+                        <div className="mt-8 text-center">
+                            <p className="text-lg font-semibold text-gray-700 mb-4">OR</p>
+                            <button
+                                onClick={scrollToLoadJson}
+                                className="quick-start-btn bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-md transition duration-150 ease-in-out text-base"
+                            >
+                                Load Your Own JSON
+                            </button>
+                        </div>
                     </section>
 
                     {/* Rate Preview Chart Section */}
@@ -1271,7 +1402,7 @@
                         <button onClick={addOverrideRuleHandler} className="add-btn w-full sm:w-auto bg-purple-500 hover:bg-purple-600">+ Add Override Day Rule</button>
                     </section>
 
-                    <section className="mt-10 p-6 bg-gray-50 rounded-lg shadow-inner">
+                    <section id="load-json-section" className="mt-10 p-6 bg-gray-50 rounded-lg shadow-inner">
                         <h2 className="subsection-title text-xl mb-4 text-gray-700 border-b pb-2">Generate & View JSON</h2>
                         <div className="flex flex-col sm:flex-row gap-4 mb-4">
                             <button onClick={handleGenerateJson} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg">Validate & Generate JSON</button>
@@ -1298,6 +1429,20 @@
                              />
                         )}
                         <textarea id="jsonOutputReact" rows="20" className="w-full p-4 border border-gray-300 rounded-md bg-gray-100 text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={jsonOutput} readOnly placeholder="JSON output will appear here after successful validation..."></textarea>
+
+                        <h3 className="subsection-title text-xl mb-4 mt-8 text-gray-700 border-b pb-2">Load Existing JSON</h3>
+                        <p className="text-sm text-gray-600 mb-4">Paste your tariff schema JSON below to load it into the designer. This will clear the current configuration.</p>
+                        <textarea
+                            id="jsonInputReact"
+                            rows="10"
+                            className="w-full p-4 border border-gray-300 rounded-md bg-gray-100 text-sm font-mono focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                            value={loadJsonInput}
+                            onChange={(e) => setLoadJsonInput(e.target.value)}
+                            placeholder='Paste your JSON here, e.g., { "month_structure": [...], "override": [...] }'
+                        ></textarea>
+                        <button onClick={handleLoadJson} className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg">
+                            Load JSON
+                        </button>
                     </section>
 
                     <footer className="text-center text-sm text-gray-500 mt-12">
@@ -1343,7 +1488,7 @@
                 })
                 .catch(err => {
                     console.error('Clipboard copy error:', err);
-                    let userErrorMessage = "Failed to copy JSON. Please check the browser console for more details.";
+                    let userErrorMessage = "Failed to copy: Please try again."; // Simplified error message for user
                     if (err && err.name === "NotAllowedError") {
                         userErrorMessage = `<b>Clipboard Error:</b> ${err.message} <br/>This usually means the action was blocked by a <b>permissions policy</b>.`;
                         if (!window.isSecureContext) {
