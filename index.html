@@ -16,6 +16,7 @@
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -685,7 +686,6 @@
             const [overrideRules, setOverrideRules] = useState([]);
             const [jsonOutput, setJsonOutput] = useState('');
             const [loadJsonInput, setLoadJsonInput] = useState('');
-            // New state for controlling the visibility of the "Load Existing JSON" section
             const [showLoadJson, setShowLoadJson] = useState(false);
             const [statusMessage, setStatusMessage] = useState({ text: '', isError: false });
 
@@ -757,7 +757,6 @@
                 const newRule = {
                     id: getNextId('overrideRule'),
                     number: counters.overrideRule + 1,
-                    // Initialize with a default date or empty string for the date picker
                     dates: [{ id: getNextId('dateEntry'), dateString: '' }],
                     ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }]
                 };
@@ -821,12 +820,10 @@
                     let startMinutes = timeStringToMinutes(r.start);
                     let endMinutes = (r.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(r.end); // 00:00 means end of day
 
-                    // Validate if times are on 00 or 30 minute marks
                     if (startMinutes % 30 !== 0) return `${contextMessage}: Start time ${r.start} must be on a :00 or :30 mark.`;
                     if (r.end !== "00:00" && (endMinutes % 30 !== 0)) return `${contextMessage}: End time ${r.end} must be on a :00 or :30 mark (or be "00:00" for end of day).`;
 
                     if (startMinutes === 0 && endMinutes === MINUTES_IN_DAY) {
-                        // Full day coverage, prevent double counting if only one range is full day
                         if (rateTimeranges.length === 1) {
                             for (let m = 0; m < MINUTES_IN_DAY; m++) minuteCoverage[m]++;
                             continue;
@@ -836,10 +833,8 @@
                     }
 
                     if (startMinutes < endMinutes) {
-                        // Normal time range within a day
                         for (let m = startMinutes; m < endMinutes; m++) minuteCoverage[m]++;
                     } else {
-                        // Spans across midnight (e.g., 22:00 - 06:00)
                         for (let m = startMinutes; m < MINUTES_IN_DAY; m++) minuteCoverage[m]++;
                         for (let m = 0; m < endMinutes; m++) minuteCoverage[m]++;
                     }
@@ -943,7 +938,7 @@
                 let allOverriddenDates = new Set(); // Use this to check for duplicate override dates
                 overrideRules.forEach(rule => {
                     const overrideContext = `Override Rule #${rule.number}`;
-                    const annualDatesMap = new Map(); // Map to group dates by month for this rule
+                    const annualDatesMap = new Map();
 
                     if (rule.dates.length === 0) {
                         validationErrors.push(`${overrideContext}: No specific dates defined for override.`);
@@ -956,12 +951,12 @@
                         }
 
                         const [year, month, day] = entry.dateString.split('-').map(Number);
-                        const dateKey = `${month}-${day}`; // Format for duplicate check
+                        const dateKey = `${month}-${day}`;
 
                         if (allOverriddenDates.has(dateKey)) {
                             validationErrors.push(`Conflict: Date ${MONTHS_DATA.find(m=>m.value===month)?.name} ${day} is defined in multiple Override Rules or multiple times within the same rule.`);
                         }
-                        allOverriddenDates.add(dateKey); // Add to overall set
+                        allOverriddenDates.add(dateKey);
 
                         if (!annualDatesMap.has(month)) {
                             annualDatesMap.set(month, []);
@@ -969,10 +964,9 @@
                         annualDatesMap.get(month).push(day);
                     });
 
-                    // Convert map to desired annual_date array format
                     const annualDates = Array.from(annualDatesMap.entries()).map(([month, days]) => ({
                         month: month,
-                        days: days.sort((a, b) => a - b) // Sort days for consistent output
+                        days: days.sort((a, b) => a - b)
                     }));
                     
                     if (rule.ratePeriods.length === 0 && annualDates.length > 0) validationErrors.push(`${overrideContext}: No rate time ranges defined for the specified dates.`);
@@ -1010,10 +1004,15 @@
                 }
             }, [standardRules, holidayMonthRules, overrideRules, holidayCountry, holidayState, parseAndValidateRuleSetForReact, validateTimeRangesForReact]);
 
-            const handleLoadJson = useCallback(() => {
+            const handleLoadJson = useCallback((jsonToLoad) => {
                 try {
-                    const parsedJson = JSON.parse(loadJsonInput);
-                    clearAllConfigurations(); // Clear existing state before loading new
+                    const jsonString = typeof jsonToLoad === 'string' ? jsonToLoad : loadJsonInput;
+                     if (!jsonString) {
+                        setStatusMessage({ text: "No JSON data to load.", isError: true });
+                        return;
+                    }
+                    const parsedJson = JSON.parse(jsonString);
+                    clearAllConfigurations();
 
                     // Reconstruct standard rules
                     if (parsedJson.month_structure) {
@@ -1023,15 +1022,15 @@
                                 weekdays: wg.iso_weekday,
                                 ratePeriods: wg.day_structure.rate_timeranges.map(rp => ({
                                     id: generateId(),
-                                    start: formatTimeForDisplay(timeStringToMinutes(rp.start)), // Normalize time format
-                                    end: formatTimeForDisplay(timeStringToMinutes(rp.end)),     // Normalize time format
+                                    start: formatTimeForDisplay(timeStringToMinutes(rp.start)),
+                                    end: formatTimeForDisplay(timeStringToMinutes(rp.end)),
                                     amount: rp.amount,
                                     isOffpeak: rp.label === "OFF_PEAK"
                                 }))
                             }));
                             return {
                                 id: generateId(),
-                                number: idx + 1, // Reassign numbers based on order
+                                number: idx + 1,
                                 months: rule.month,
                                 weekdayGroups: newWeekdayGroups
                             };
@@ -1050,15 +1049,15 @@
                                     weekdays: wg.iso_weekday,
                                     ratePeriods: wg.day_structure.rate_timeranges.map(rp => ({
                                         id: generateId(),
-                                        start: formatTimeForDisplay(timeStringToMinutes(rp.start)), // Normalize time format
-                                        end: formatTimeForDisplay(timeStringToMinutes(rp.end)),     // Normalize time format
+                                        start: formatTimeForDisplay(timeStringToMinutes(rp.start)),
+                                        end: formatTimeForDisplay(timeStringToMinutes(rp.end)),
                                         amount: rp.amount,
                                         isOffpeak: rp.label === "OFF_PEAK"
                                     }))
                                 }));
                                 return {
                                     id: generateId(),
-                                    number: idx + 1, // Reassign numbers
+                                    number: idx + 1,
                                     months: rule.month,
                                     weekdayGroups: newWeekdayGroups
                                 };
@@ -1072,9 +1071,7 @@
                         const newOverrideRules = parsedJson.override.map((rule, idx) => {
                             const newDates = [];
                             rule.annual_date.forEach(ad => {
-                                // For simplicity, pick a dummy leap year like 2024 for display in date pickers
-                                // The month and day are the crucial parts for the JSON output.
-                                const yearForDisplay = 2024; // Arbitrary leap year for display
+                                const yearForDisplay = 2024;
                                 ad.days.forEach(day => {
                                     const monthStr = String(ad.month).padStart(2, '0');
                                     const dayStr = String(day).padStart(2, '0');
@@ -1087,14 +1084,14 @@
 
                             const newRatePeriods = rule.day_structure.rate_timeranges.map(rp => ({
                                 id: generateId(),
-                                start: formatTimeForDisplay(timeStringToMinutes(rp.start)), // Normalize time format
-                                end: formatTimeForDisplay(timeStringToMinutes(rp.end)),     // Normalize time format
+                                start: formatTimeForDisplay(timeStringToMinutes(rp.start)),
+                                end: formatTimeForDisplay(timeStringToMinutes(rp.end)),
                                 amount: rp.amount,
                                 isOffpeak: rp.label === "OFF_PEAK"
                             }));
                             return {
                                 id: generateId(),
-                                number: idx + 1, // Reassign numbers
+                                number: idx + 1,
                                 dates: newDates,
                                 ratePeriods: newRatePeriods
                             };
@@ -1103,8 +1100,6 @@
                     }
 
                     setStatusMessage({ text: "JSON loaded successfully! Generating output...", isError: false });
-                    // Trigger JSON generation after state updates
-                    // This will be called via useEffect due to dependencies on state changes
                 } catch (error) {
                     console.error("Error loading JSON:", error);
                     setStatusMessage({ text: `Failed to load JSON: ${error.message}. Please check format.`, isError: true });
@@ -1181,8 +1176,7 @@
                 ]);
                 setOverrideRules([{
                     id: 'ovr-comp-1', number: 1,
-                    // Use full date strings for the override example, updated 29/02 to a valid leap year for display
-                    dates: [ {id: 'ovr-dt-1', dateString: '2025-12-25'}, {id: 'ovr-dt-2', dateString: '2025-12-31'}, {id: 'ovr-dt-3', dateString: '2024-02-29'} ], // Changed 2025-02-29 to 2024-02-29
+                    dates: [ {id: 'ovr-dt-1', dateString: '2025-12-25'}, {id: 'ovr-dt-2', dateString: '2025-12-31'}, {id: 'ovr-dt-3', dateString: '2024-02-29'} ],
                     ratePeriods: [{id: 'ovr-rp-1', start: "00:00", end: "00:00", amount: 0.10, isOffpeak: false}]
                 }]);
                 setStatusMessage({ text: "Fully Complicated example loaded.", isError: false });
@@ -1192,9 +1186,73 @@
                 handleGenerateJson();
             }, [standardRules, holidayMonthRules, overrideRules, holidayCountry, holidayState, handleGenerateJson]);
 
+            // --- New: Handle loading from URL on initial mount ---
             useEffect(() => {
-                loadFlatRateExample();
-            }, [loadFlatRateExample]);
+                const urlParams = new URLSearchParams(window.location.search);
+                const schemaParam = urlParams.get('schema');
+
+                if (schemaParam && window.pako) {
+                    try {
+                        // Decode from URL-safe Base64
+                        const base64String = schemaParam.replace(/-/g, '+').replace(/_/g, '/');
+                        const compressedString = atob(base64String);
+                        const compressedArray = new Uint8Array([...compressedString].map(char => char.charCodeAt(0)));
+                        
+                        // Decompress using pako
+                        const decompressedJson = pako.inflate(compressedArray, { to: 'string' });
+
+                        // Load the schema from the decompressed JSON
+                        handleLoadJson(decompressedJson);
+                        setStatusMessage({ text: "Tariff schema successfully loaded from URL.", isError: false });
+                    } catch (e) {
+                        console.error("Failed to parse schema from URL:", e);
+                        setStatusMessage({ text: `Error: Could not load schema from URL. ${e.message}`, isError: true });
+                        loadFlatRateExample(); // Fallback to default
+                    }
+                } else {
+                    // No schema in URL, load a default example
+                    loadFlatRateExample();
+                }
+            }, []); // Empty dependency array ensures this runs only once on mount
+
+            // --- New: Handle sharing ---
+            const handleShare = useCallback(() => {
+                if (!jsonOutput) {
+                    setStatusMessage({ text: "Please generate a valid JSON first before sharing.", isError: true });
+                    return;
+                }
+                if (!window.pako) {
+                    setStatusMessage({ text: "Compression library (pako) not loaded. Cannot create share link.", isError: true });
+                    return;
+                }
+
+                try {
+                    // Compress the JSON output using pako
+                    const compressed = pako.deflate(jsonOutput, { to: 'string' });
+                    
+                    // Encode to URL-safe Base64
+                    const base64 = btoa(String.fromCharCode.apply(null, compressed));
+                    const urlSafeBase64 = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+                    // Create the full URL
+                    const newUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}?schema=${urlSafeBase64}`;
+
+                    // Copy to clipboard
+                    navigator.clipboard.writeText(newUrl).then(() => {
+                        setStatusMessage({ text: "Sharable URL copied to clipboard!", isError: false });
+                        // Also update the browser's address bar
+                        window.history.pushState({ path: newUrl }, '', newUrl);
+                    }).catch(err => {
+                        console.error("Failed to copy URL: ", err);
+                        setStatusMessage({ text: "Failed to copy URL. It has been set in your address bar for manual copying.", isError: true });
+                        window.history.pushState({ path: newUrl }, '', newUrl);
+                    });
+
+                } catch (error) {
+                    console.error("Failed to create share link:", error);
+                    setStatusMessage({ text: `Error creating share link: ${error.message}`, isError: true });
+                }
+            }, [jsonOutput]);
 
 
             // --- Chart Data Generation ---
@@ -1234,10 +1292,7 @@
 
                         let rate = null;
 
-                        // Check for override rules first
                         const activeOverride = overrideRules.find(or =>
-                            // For override rules, we check if ANY of the selected dates (month/day) match the current day in the loop
-                            // regardless of the year used in the date picker input.
                             or.dates.some(d => {
                                 if (d.dateString) {
                                     const [, m, day] = d.dateString.split('-').map(Number);
@@ -1255,7 +1310,6 @@
                             }
                         }
 
-                        // If no override, check holiday rules
                         if (rate === null && isHoliday && holidayCountry) {
                              const applicableHolidayRule = holidayMonthRules.find(hr => hr.months.includes(currentMonth));
                              if(applicableHolidayRule) {
@@ -1271,7 +1325,6 @@
                              }
                         }
 
-                        // If no override and not a holiday, check standard rules
                         if (rate === null) {
                             const applicableStandardRule = standardRules.find(sr => sr.months.includes(currentMonth));
                             if(applicableStandardRule) {
@@ -1296,11 +1349,10 @@
             return (
                 <div className="max-w-6xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-2xl">
                     <header className="mb-10 text-center">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Schema Designer</h1> {/* Title Changed */}
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Schema Designer</h1>
                         <p className="text-gray-600 mt-3 text-lg">Define standard rates, country-specific holidays, and date overrides with full validation.</p>
                     </header>
 
-                    {/* Load Existing JSON Section - Now Collapsible */}
                     <section id="load-json-section" className="section-container mb-10 bg-purple-50 border-purple-200">
                         <div className="collapsible-header" onClick={() => setShowLoadJson(!showLoadJson)}>
                             Load an Existing Tariff JSON
@@ -1317,7 +1369,7 @@
                                     onChange={(e) => setLoadJsonInput(e.target.value)}
                                     placeholder='Paste your JSON here, e.g., { "month_structure": [...], "override": [...] }'
                                 ></textarea>
-                                <button onClick={handleLoadJson} className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg">
+                                <button onClick={() => handleLoadJson()} className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg">
                                     Load JSON
                                 </button>
                             </div>
@@ -1336,8 +1388,7 @@
                         </div>
                     </section>
 
-                    {/* Rate Preview Chart Section */}
-                    <section className="section-container sticky-chart-section !py-2 px-6"> {/* Reduced vertical padding */}
+                    <section className="section-container sticky-chart-section !py-2 px-6">
                         <div className="flex items-center mb-1">
                             <label htmlFor="weekPicker" className="input-label mr-2 mb-0">Select Week to Preview:</label>
                             <input
@@ -1433,16 +1484,14 @@
                     </section>
 
                     <section className="mt-10 p-6 bg-gray-50 rounded-lg shadow-inner">
-                        <h2 className="subsection-title text-xl mb-4 text-gray-700 border-b pb-2">Generate & View JSON</h2>
+                        <h2 className="subsection-title text-xl mb-4 text-gray-700 border-b pb-2">Generate, Share & View JSON</h2>
                         <div className="flex flex-col sm:flex-row gap-4 mb-4">
                             <button onClick={handleGenerateJson} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg">Validate & Generate JSON</button>
+                            <button onClick={handleShare} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg" disabled={!jsonOutput}>Share Schema</button>
                             <button
                                 onClick={() => {
                                     if (typeof window.copyJsonToClipboardGlobal === 'function') {
                                         window.copyJsonToClipboardGlobal(jsonOutput, setStatusMessage);
-                                    } else {
-                                        console.error("Global copy function not defined");
-                                        setStatusMessage({text: "Copy function error. See console.", isError: true});
                                     }
                                 }}
                                 className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out text-lg"
@@ -1462,7 +1511,7 @@
                     </section>
 
                     <footer className="text-center text-sm text-gray-500 mt-12">
-                        <p>&copy; <span id="currentYearReact">{new Date().getFullYear()}</span> Schema Designer Interface. Internal Use Only.</p> {/* Title Changed */}
+                        <p>&copy; <span id="currentYearReact">{new Date().getFullYear()}</span> Schema Designer Interface. Internal Use Only.</p>
                     </footer>
                 </div>
             );
@@ -1471,20 +1520,6 @@
         window.showStatusMessageGlobal = (message, isError, reactSetStatusMessage) => {
             if (reactSetStatusMessage) {
                 reactSetStatusMessage({text: message, isError: isError });
-            } else {
-                const statusDiv = document.getElementById('statusMessageReact') || document.getElementById('statusMessage');
-                if (statusDiv) {
-                    statusDiv.innerHTML = message.replace(/\n/g, '<br>');
-                    statusDiv.className = `mb-2 text-sm font-medium text-center p-2 rounded-md ${isError ? 'text-red-700 bg-red-100 border border-red-300 text-left' : 'text-green-700 bg-green-100 border border-green-300'}`;
-                    if (!isError) {
-                        setTimeout(() => {
-                            if (statusDiv.innerHTML === message.replace(/\n/g, '<br>') && !statusDiv.classList.contains('text-red-700')) {
-                                statusDiv.textContent = '';
-                                statusDiv.className = 'mb-2 text-sm font-medium text-center p-2 rounded-md';
-                            }
-                        }, 7000);
-                    }
-                }
             }
         };
 
@@ -1494,29 +1529,13 @@
                 showStatus("Nothing to copy. Generate JSON first.", true);
                 return;
             }
-            if (!navigator.clipboard) {
-                 showStatus("Clipboard API not available.", true);
-                return;
-            }
             navigator.clipboard.writeText(textToCopy)
                 .then(() => {
                      showStatus("JSON copied to clipboard!", false);
                 })
                 .catch(err => {
                     console.error('Clipboard copy error:', err);
-                    let userErrorMessage = "Failed to copy: Please try again."; // Simplified error message for user
-                    if (err && err.name === "NotAllowedError") {
-                        userErrorMessage = `<b>Clipboard Error:</b> ${err.message} <br/>This usually means the action was blocked by a <b>permissions policy</b>.`;
-                        if (!window.isSecureContext) {
-                            userErrorMessage += "<br/>Ensure the page is served over a secure context (<b>HTTPS</b> or <b>localhost</b>).";
-                        } else {
-                            userErrorMessage += "<br/>Check browser settings for clipboard permissions for this site, or try focusing the document before copying.";
-                        }
-                         userErrorMessage += "<br/>You may need to <a href='https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText#browser_compatibility' target='_blank' class='text-blue-600 hover:underline'>check browser compatibility and requirements</a> or copy the text manually.";
-                    } else if (err && err.message) {
-                        userErrorMessage = `Failed to copy: ${err.name || 'Error'} - ${err.message}`;
-                    }
-                    showStatus(userErrorMessage, true);
+                    showStatus(`<b>Clipboard Error:</b> ${err.message}`, true);
                 });
         };
 
