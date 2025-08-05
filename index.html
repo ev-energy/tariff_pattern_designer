@@ -1204,6 +1204,17 @@
                         // Load the schema from the decompressed JSON
                         handleLoadJson(decompressedJson);
                         setStatusMessage({ text: "Tariff schema successfully loaded from URL.", isError: false });
+                        
+                        // --- MODIFICATION START: Scroll to chart section ---
+                        // Scroll to the chart section after a brief delay to allow for rendering
+                        setTimeout(() => {
+                            const chartElement = document.getElementById('sticky-chart-section');
+                            if (chartElement) {
+                                chartElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }, 100);
+                        // --- MODIFICATION END ---
+
                     } catch (e) {
                         console.error("Failed to parse schema from URL:", e);
                         setStatusMessage({ text: `Error: Could not load schema from URL. ${e.message}`, isError: true });
@@ -1388,7 +1399,9 @@
                         </div>
                     </section>
 
-                    <section className="section-container sticky-chart-section !py-2 px-6">
+                    {/* MODIFICATION START: Added id to this section */}
+                    <section id="sticky-chart-section" className="section-container sticky-chart-section !py-2 px-6">
+                    {/* MODIFICATION END */}
                         <div className="flex items-center mb-1">
                             <label htmlFor="weekPicker" className="input-label mr-2 mb-0">Select Week to Preview:</label>
                             <input
