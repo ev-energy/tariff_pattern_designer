@@ -279,10 +279,14 @@
         const RatePeriod = ({ period, onChange, onRemove }) => {
             const [displayAmount, setDisplayAmount] = useState(period.amount.toString());
 
+            // --- MODIFICATION START: Updated useEffect and handleAmountInputChange ---
             useEffect(() => {
-                const propAmountString = period.amount.toString();
-                if (parseFloat(displayAmount) !== period.amount || (displayAmount !== propAmountString && displayAmount !== parseFloat(propAmountString).toString()) ) {
-                     setDisplayAmount(propAmountString);
+                // This effect synchronizes the input field if the prop `period.amount`
+                // is updated from outside (e.g., loading an example).
+                // It compares numeric values, so it doesn't interfere with user
+                // typing different formats for the same number (e.g., "-0" vs "0").
+                if (parseFloat(displayAmount) !== period.amount) {
+                    setDisplayAmount(period.amount.toString());
                 }
             }, [period.amount]);
 
@@ -305,15 +309,26 @@
 
             const handleAmountInputChange = (e) => {
                 const stringValue = e.target.value;
-                setDisplayAmount(stringValue);
+                setDisplayAmount(stringValue); // Update display immediately to what the user typed.
 
-                const parsedNum = parseFloat(stringValue);
-                if (stringValue === "" || stringValue === "-") {
+                // If the input is empty, treat the amount as 0.
+                if (stringValue === '') {
                     onChange({ ...period, amount: 0 });
-                } else if (!isNaN(parsedNum)) {
+                    return;
+                }
+
+                // Try to parse the input.
+                const parsedNum = parseFloat(stringValue);
+
+                // If the result is a valid number, update the parent's state.
+                if (!isNaN(parsedNum)) {
                     onChange({ ...period, amount: parsedNum });
                 }
+                // For other cases (like typing just "-" or "-."), we only update the local display.
+                // The parent's amount state is not updated, preventing the useEffect from
+                // incorrectly overwriting the user's intermediate input.
             };
+            // --- MODIFICATION END ---
 
             return (
                 <div className="p-3 border border-gray-200 rounded-md grid grid-cols-1 sm:grid-cols-8 gap-2 items-center bg-white shadow-sm text-sm">
@@ -344,7 +359,6 @@
                             step="0.0001"
                             value={displayAmount}
                             onChange={handleAmountInputChange}
-                            min="0"
                             className="input-field text-xs rate-amount"
                         />
                     </div>
@@ -619,7 +633,6 @@
                                 },
                                 y: {
                                     title: { display: true, text: 'Value' }, // Changed Y-axis title
-                                    beginAtZero: true,
                                      ticks: { callback: function(value) { return value.toFixed(2); } } // Removed currency
                                 }
                             },
@@ -1399,9 +1412,7 @@
                         </div>
                     </section>
 
-                    {/* MODIFICATION START: Added id to this section */}
                     <section id="sticky-chart-section" className="section-container sticky-chart-section !py-2 px-6">
-                    {/* MODIFICATION END */}
                         <div className="flex items-center mb-1">
                             <label htmlFor="weekPicker" className="input-label mr-2 mb-0">Select Week to Preview:</label>
                             <input
