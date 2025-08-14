@@ -279,12 +279,7 @@
         const RatePeriod = ({ period, onChange, onRemove }) => {
             const [displayAmount, setDisplayAmount] = useState(period.amount.toString());
 
-            // --- MODIFICATION START: Updated useEffect and handleAmountInputChange ---
             useEffect(() => {
-                // This effect synchronizes the input field if the prop `period.amount`
-                // is updated from outside (e.g., loading an example).
-                // It compares numeric values, so it doesn't interfere with user
-                // typing different formats for the same number (e.g., "-0" vs "0").
                 if (parseFloat(displayAmount) !== period.amount) {
                     setDisplayAmount(period.amount.toString());
                 }
@@ -309,26 +304,19 @@
 
             const handleAmountInputChange = (e) => {
                 const stringValue = e.target.value;
-                setDisplayAmount(stringValue); // Update display immediately to what the user typed.
+                setDisplayAmount(stringValue); 
 
-                // If the input is empty, treat the amount as 0.
                 if (stringValue === '') {
                     onChange({ ...period, amount: 0 });
                     return;
                 }
 
-                // Try to parse the input.
                 const parsedNum = parseFloat(stringValue);
 
-                // If the result is a valid number, update the parent's state.
                 if (!isNaN(parsedNum)) {
                     onChange({ ...period, amount: parsedNum });
                 }
-                // For other cases (like typing just "-" or "-."), we only update the local display.
-                // The parent's amount state is not updated, preventing the useEffect from
-                // incorrectly overwriting the user's intermediate input.
             };
-            // --- MODIFICATION END ---
 
             return (
                 <div className="p-3 border border-gray-200 rounded-md grid grid-cols-1 sm:grid-cols-8 gap-2 items-center bg-white shadow-sm text-sm">
@@ -366,7 +354,7 @@
                         <input
                             type="checkbox"
                             id={`isOffpeak-${period.id}`}
-                            checked={!!period.isOffpeak} // Ensure it's a boolean for the checkbox
+                            checked={!!period.isOffpeak}
                             onChange={(e) => onChange({ ...period, isOffpeak: e.target.checked })}
                             className="mr-1.5 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                         />
@@ -822,42 +810,58 @@
                      setFetchedHolidaysStatus('Awaiting country/state input...');
                 }
             }, [holidayCountry, holidayState, fetchHolidaysCallback]);
-
+            
+            // --- MODIFICATION START: Updated validation logic ---
             const validateTimeRangesForReact = useCallback((rateTimeranges, contextMessage) => {
                 if (!rateTimeranges || rateTimeranges.length === 0) {
                     return `${contextMessage}: No rate time ranges defined. Full day coverage is required.`;
                 }
+
+                // Case 1: A single rate period where start time equals end time signifies a 24-hour flat rate.
+                if (rateTimeranges.length === 1 && rateTimeranges[0].start === rateTimeranges[0].end) {
+                    const r = rateTimeranges[0];
+                    if (!r.start) return `${contextMessage}: A rate period is missing a start or end time.`;
+                    if (timeStringToMinutes(r.start) % 30 !== 0) return `${contextMessage}: All-day rate time ${r.start} must be on a :00 or :30 mark.`;
+                    return null; // This is a valid 24-hour period.
+                }
+
+                // Case 2: If any period has start === end but there are multiple periods, it's an error.
+                if (rateTimeranges.some(r => r.start === r.end)) {
+                    return `${contextMessage}: An all-day rate (where start time equals end time) cannot be mixed with other rate periods.`;
+                }
+
                 const minuteCoverage = new Array(MINUTES_IN_DAY).fill(0);
+
                 for (const r of rateTimeranges) {
                     if (!r.start || !r.end) return `${contextMessage}: A rate period is missing a start or end time.`;
+
                     let startMinutes = timeStringToMinutes(r.start);
-                    let endMinutes = (r.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(r.end); // 00:00 means end of day
+                    // Special handling for "00:00" end time to mean the end of the 24-hour day.
+                    let endMinutes = (r.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(r.end);
 
                     if (startMinutes % 30 !== 0) return `${contextMessage}: Start time ${r.start} must be on a :00 or :30 mark.`;
-                    if (r.end !== "00:00" && (endMinutes % 30 !== 0)) return `${contextMessage}: End time ${r.end} must be on a :00 or :30 mark (or be "00:00" for end of day).`;
+                    if (r.end !== "00:00" && (timeStringToMinutes(r.end) % 30 !== 0)) return `${contextMessage}: End time ${r.end} must be on a :00 or :30 mark (or be "00:00" for end of day).`;
 
-                    if (startMinutes === 0 && endMinutes === MINUTES_IN_DAY) {
-                        if (rateTimeranges.length === 1) {
-                            for (let m = 0; m < MINUTES_IN_DAY; m++) minuteCoverage[m]++;
-                            continue;
-                        }
-                    } else if (startMinutes >= endMinutes && !(startMinutes > timeStringToMinutes(r.end) && endMinutes !== MINUTES_IN_DAY) ) {
-                         return `${contextMessage}: Period ${r.start}-${r.end} has zero or negative duration or spans across midnight incorrectly.`;
-                    }
-
-                    if (startMinutes < endMinutes) {
-                        for (let m = startMinutes; m < endMinutes; m++) minuteCoverage[m]++;
-                    } else {
+                    // Since the all-day case (start === end) is handled, startMinutes >= endMinutes now only means overnight.
+                    if (startMinutes >= endMinutes) {
+                        // A valid overnight period, e.g., 22:00 to 02:00.
                         for (let m = startMinutes; m < MINUTES_IN_DAY; m++) minuteCoverage[m]++;
                         for (let m = 0; m < endMinutes; m++) minuteCoverage[m]++;
+                    } else {
+                        // A normal period within a single day, e.g., 09:00 to 17:00.
+                        for (let m = startMinutes; m < endMinutes; m++) minuteCoverage[m]++;
                     }
                 }
+
+                // Final check for gaps and overlaps across all periods.
                 for (let m = 0; m < MINUTES_IN_DAY; m++) {
                     if (minuteCoverage[m] === 0) return `${contextMessage}: Gap in time coverage at ${formatTimeForDisplay(m)}.`;
                     if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time periods detected around ${formatTimeForDisplay(m)}.`;
                 }
-                return null;
+
+                return null; // All checks passed
             }, []);
+            // --- MODIFICATION END ---
 
             const parseAndValidateRuleSetForReact = useCallback((rules, ruleTypeLabel, validationErrors, overallCoveredMonthsSet) => {
                 const rulesOutput = [];
@@ -1218,7 +1222,6 @@
                         handleLoadJson(decompressedJson);
                         setStatusMessage({ text: "Tariff schema successfully loaded from URL.", isError: false });
                         
-                        // --- MODIFICATION START: Scroll to chart section ---
                         // Scroll to the chart section after a brief delay to allow for rendering
                         setTimeout(() => {
                             const chartElement = document.getElementById('sticky-chart-section');
@@ -1226,7 +1229,6 @@
                                 chartElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }
                         }, 100);
-                        // --- MODIFICATION END ---
 
                     } catch (e) {
                         console.error("Failed to parse schema from URL:", e);
@@ -1281,6 +1283,31 @@
 
             // --- Chart Data Generation ---
             const chartData = useMemo(() => {
+                // --- MODIFICATION START: Helper function for chart rate lookup ---
+                const getRateForMinute = (ratePeriods, minutesIntoDay) => {
+                    for (const rp of ratePeriods) {
+                        // Handle all-day rate (start === end)
+                        if (rp.start === rp.end) {
+                            return rp.amount;
+                        }
+
+                        const startM = timeStringToMinutes(rp.start);
+                        const endM = (rp.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(rp.end);
+
+                        if (startM < endM) { // Normal day period
+                            if (minutesIntoDay >= startM && minutesIntoDay < endM) {
+                                return rp.amount;
+                            }
+                        } else { // Overnight period
+                            if (minutesIntoDay >= startM || minutesIntoDay < endM) {
+                                return rp.amount;
+                            }
+                        }
+                    }
+                    return null;
+                };
+                // --- MODIFICATION END ---
+
                 const weekStart = new Date(selectedWeekStart + "T00:00:00");
                 const labels = [];
                 const dataPoints = [];
@@ -1316,6 +1343,7 @@
 
                         let rate = null;
 
+                        // --- MODIFICATION START: Use helper function for cleaner rate lookup ---
                         const activeOverride = overrideRules.find(or =>
                             or.dates.some(d => {
                                 if (d.dateString) {
@@ -1326,12 +1354,7 @@
                             })
                         );
                         if (activeOverride) {
-                            for (const rp of activeOverride.ratePeriods) {
-                                const startM = timeStringToMinutes(rp.start);
-                                const endM = (rp.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(rp.end);
-                                if (startM <= minutesIntoDay && minutesIntoDay < endM) { rate = rp.amount; break; }
-                                else if (startM > endM && (minutesIntoDay >= startM || minutesIntoDay < endM)) { rate = rp.amount; break; }
-                            }
+                            rate = getRateForMinute(activeOverride.ratePeriods, minutesIntoDay);
                         }
 
                         if (rate === null && isHoliday && holidayCountry) {
@@ -1339,12 +1362,7 @@
                              if(applicableHolidayRule) {
                                 const applicableWeekdayGroup = applicableHolidayRule.weekdayGroups.find(wg => wg.weekdays.includes(currentIsoWeekday));
                                 if(applicableWeekdayGroup) {
-                                    for (const rp of applicableWeekdayGroup.ratePeriods) {
-                                        const startM = timeStringToMinutes(rp.start);
-                                        const endM = (rp.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(rp.end);
-                                        if (startM <= minutesIntoDay && minutesIntoDay < endM) { rate = rp.amount; break; }
-                                        else if (startM > endM && (minutesIntoDay >= startM || minutesIntoDay < endM)) { rate = rp.amount; break; }
-                                    }
+                                    rate = getRateForMinute(applicableWeekdayGroup.ratePeriods, minutesIntoDay);
                                 }
                              }
                         }
@@ -1354,15 +1372,11 @@
                             if(applicableStandardRule) {
                                 const applicableWeekdayGroup = applicableStandardRule.weekdayGroups.find(wg => wg.weekdays.includes(currentIsoWeekday));
                                 if(applicableWeekdayGroup) {
-                                     for (const rp of applicableWeekdayGroup.ratePeriods) {
-                                        const startM = timeStringToMinutes(rp.start);
-                                        const endM = (rp.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(rp.end);
-                                        if (startM <= minutesIntoDay && minutesIntoDay < endM) { rate = rp.amount; break; }
-                                        else if (startM > endM && (minutesIntoDay >= startM || minutesIntoDay < endM)) { rate = rp.amount; break; }
-                                    }
+                                     rate = getRateForMinute(applicableWeekdayGroup.ratePeriods, minutesIntoDay);
                                 }
                             }
                         }
+                        // --- MODIFICATION END ---
                         dataPoints.push(rate !== null ? rate : 0);
                     }
                 }
