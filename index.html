@@ -690,23 +690,12 @@
             const [showLoadJson, setShowLoadJson] = useState(false);
             const [statusMessage, setStatusMessage] = useState({ text: '', isError: false });
 
-            const [counters, setCounters] = useState({
-                standardRule: 0, holidayRule: 0, overrideRule: 0,
-                weekdayGroup: 0, ratePeriod: 0, dateEntry: 0,
-            });
-
             const [selectedWeekStart, setSelectedWeekStart] = useState(() => {
                 const today = new Date();
                 const dayOfWeek = today.getDay();
                 const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
                 return new Date(today.setDate(diff)).toISOString().split('T')[0];
             });
-
-            const getNextId = useCallback((type) => {
-                const nextVal = counters[type] + 1;
-                setCounters(prev => ({ ...prev, [type]: nextVal }));
-                return `${type}-${nextVal}-${Date.now()}`;
-            }, [counters]);
 
             const clearAllConfigurations = useCallback(() => {
                 setStandardRules([]);
@@ -719,15 +708,16 @@
                 setJsonOutput('');
                 setLoadJsonInput(''); // Clear input JSON as well
                 setStatusMessage({ text: '', isError: false });
-                setCounters({ standardRule: 0, holidayRule: 0, overrideRule: 0, weekdayGroup: 0, ratePeriod: 0, dateEntry: 0 });
             }, []);
 
+            // --- MODIFICATION START: Updated rule adding logic ---
             const addStandardRule = () => {
+                const newRuleNumber = (standardRules.length > 0 ? Math.max(...standardRules.map(r => r.number)) : 0) + 1;
                 const newRule = {
-                    id: getNextId('standardRule'),
-                    number: counters.standardRule + 1,
+                    id: generateId(),
+                    number: newRuleNumber,
                     months: [],
-                    weekdayGroups: [{ id: getNextId('weekdayGroup'), weekdays: [], ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }] }]
+                    weekdayGroups: [{ id: generateId(), weekdays: [], ratePeriods: [{ id: generateId(), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }] }]
                 };
                 setStandardRules(prev => [...prev, newRule]);
             };
@@ -739,11 +729,12 @@
             };
 
             const addHolidayMonthRule = () => {
+                const newRuleNumber = (holidayMonthRules.length > 0 ? Math.max(...holidayMonthRules.map(r => r.number)) : 0) + 1;
                 const newRule = {
-                    id: getNextId('holidayRule'),
-                    number: counters.holidayRule + 1,
+                    id: generateId(),
+                    number: newRuleNumber,
                     months: [],
-                    weekdayGroups: [{ id: getNextId('weekdayGroup'), weekdays: [], ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }] }]
+                    weekdayGroups: [{ id: generateId(), weekdays: [], ratePeriods: [{ id: generateId(), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }] }]
                 };
                 setHolidayMonthRules(prev => [...prev, newRule]);
             };
@@ -755,11 +746,12 @@
             };
 
             const addOverrideRuleHandler = () => {
+                const newRuleNumber = (overrideRules.length > 0 ? Math.max(...overrideRules.map(r => r.number)) : 0) + 1;
                 const newRule = {
-                    id: getNextId('overrideRule'),
-                    number: counters.overrideRule + 1,
-                    dates: [{ id: getNextId('dateEntry'), dateString: '' }],
-                    ratePeriods: [{ id: getNextId('ratePeriod'), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }]
+                    id: generateId(),
+                    number: newRuleNumber,
+                    dates: [{ id: generateId(), dateString: '' }],
+                    ratePeriods: [{ id: generateId(), start: "00:00", end: "00:00", amount: 0.00, isOffpeak: false }]
                 };
                 setOverrideRules(prev => [...prev, newRule]);
             };
@@ -769,6 +761,7 @@
             const removeOverrideRule = (ruleId) => {
                 setOverrideRules(prev => prev.filter(r => r.id !== ruleId));
             };
+            // --- MODIFICATION END ---
 
             const fetchHolidaysCallback = useCallback(debounce(async (country, state) => {
                 if (!country) {
@@ -811,21 +804,18 @@
                 }
             }, [holidayCountry, holidayState, fetchHolidaysCallback]);
             
-            // --- MODIFICATION START: Updated validation logic ---
             const validateTimeRangesForReact = useCallback((rateTimeranges, contextMessage) => {
                 if (!rateTimeranges || rateTimeranges.length === 0) {
                     return `${contextMessage}: No rate time ranges defined. Full day coverage is required.`;
                 }
 
-                // Case 1: A single rate period where start time equals end time signifies a 24-hour flat rate.
                 if (rateTimeranges.length === 1 && rateTimeranges[0].start === rateTimeranges[0].end) {
                     const r = rateTimeranges[0];
                     if (!r.start) return `${contextMessage}: A rate period is missing a start or end time.`;
                     if (timeStringToMinutes(r.start) % 30 !== 0) return `${contextMessage}: All-day rate time ${r.start} must be on a :00 or :30 mark.`;
-                    return null; // This is a valid 24-hour period.
+                    return null; 
                 }
 
-                // Case 2: If any period has start === end but there are multiple periods, it's an error.
                 if (rateTimeranges.some(r => r.start === r.end)) {
                     return `${contextMessage}: An all-day rate (where start time equals end time) cannot be mixed with other rate periods.`;
                 }
@@ -836,32 +826,26 @@
                     if (!r.start || !r.end) return `${contextMessage}: A rate period is missing a start or end time.`;
 
                     let startMinutes = timeStringToMinutes(r.start);
-                    // Special handling for "00:00" end time to mean the end of the 24-hour day.
                     let endMinutes = (r.end === "00:00") ? MINUTES_IN_DAY : timeStringToMinutes(r.end);
 
                     if (startMinutes % 30 !== 0) return `${contextMessage}: Start time ${r.start} must be on a :00 or :30 mark.`;
                     if (r.end !== "00:00" && (timeStringToMinutes(r.end) % 30 !== 0)) return `${contextMessage}: End time ${r.end} must be on a :00 or :30 mark (or be "00:00" for end of day).`;
 
-                    // Since the all-day case (start === end) is handled, startMinutes >= endMinutes now only means overnight.
                     if (startMinutes >= endMinutes) {
-                        // A valid overnight period, e.g., 22:00 to 02:00.
                         for (let m = startMinutes; m < MINUTES_IN_DAY; m++) minuteCoverage[m]++;
                         for (let m = 0; m < endMinutes; m++) minuteCoverage[m]++;
                     } else {
-                        // A normal period within a single day, e.g., 09:00 to 17:00.
                         for (let m = startMinutes; m < endMinutes; m++) minuteCoverage[m]++;
                     }
                 }
 
-                // Final check for gaps and overlaps across all periods.
                 for (let m = 0; m < MINUTES_IN_DAY; m++) {
                     if (minuteCoverage[m] === 0) return `${contextMessage}: Gap in time coverage at ${formatTimeForDisplay(m)}.`;
                     if (minuteCoverage[m] > 1) return `${contextMessage}: Overlapping time periods detected around ${formatTimeForDisplay(m)}.`;
                 }
 
-                return null; // All checks passed
+                return null;
             }, []);
-            // --- MODIFICATION END ---
 
             const parseAndValidateRuleSetForReact = useCallback((rules, ruleTypeLabel, validationErrors, overallCoveredMonthsSet) => {
                 const rulesOutput = [];
@@ -1121,7 +1105,7 @@
                     console.error("Error loading JSON:", error);
                     setStatusMessage({ text: `Failed to load JSON: ${error.message}. Please check format.`, isError: true });
                 }
-            }, [loadJsonInput, clearAllConfigurations, getNextId]);
+            }, [loadJsonInput, clearAllConfigurations]);
 
 
             // --- Example Loaders ---
@@ -1283,10 +1267,8 @@
 
             // --- Chart Data Generation ---
             const chartData = useMemo(() => {
-                // --- MODIFICATION START: Helper function for chart rate lookup ---
                 const getRateForMinute = (ratePeriods, minutesIntoDay) => {
                     for (const rp of ratePeriods) {
-                        // Handle all-day rate (start === end)
                         if (rp.start === rp.end) {
                             return rp.amount;
                         }
@@ -1306,7 +1288,6 @@
                     }
                     return null;
                 };
-                // --- MODIFICATION END ---
 
                 const weekStart = new Date(selectedWeekStart + "T00:00:00");
                 const labels = [];
@@ -1343,7 +1324,6 @@
 
                         let rate = null;
 
-                        // --- MODIFICATION START: Use helper function for cleaner rate lookup ---
                         const activeOverride = overrideRules.find(or =>
                             or.dates.some(d => {
                                 if (d.dateString) {
@@ -1376,7 +1356,6 @@
                                 }
                             }
                         }
-                        // --- MODIFICATION END ---
                         dataPoints.push(rate !== null ? rate : 0);
                     }
                 }
